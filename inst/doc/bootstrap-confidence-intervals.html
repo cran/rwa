@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Martin Chan" />
+
+<meta name="date" content="2025-07-16" />
+
+<title>Bootstrap Confidence Intervals for Relative Weights Analysis</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Bootstrap Confidence Intervals for Relative
+Weights Analysis</h1>
+<h4 class="author">Martin Chan</h4>
+<h4 class="date">2025-07-16</h4>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(rwa)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>Bootstrap confidence intervals represent a major advancement in
+Relative Weights Analysis, addressing a long-standing methodological
+limitation. This vignette provides comprehensive guidance on using
+bootstrap methods with the <code>rwa</code> package for statistical
+significance testing of predictor importance.</p>
+</div>
+<div id="why-bootstrap-for-rwa" class="section level2">
+<h2>Why Bootstrap for RWA?</h2>
+<div id="the-statistical-challenge" class="section level3">
+<h3>The Statistical Challenge</h3>
+<p>As noted by Tonidandel et al. (2009):</p>
+<blockquote>
+<p>“The difficulty in determining the statistical significance of
+relative weights stems from the fact that the exact (or small sample)
+sampling distribution of relative weights is unknown.”</p>
+</blockquote>
+<p>Traditional RWA provides point estimates of relative importance but
+lacks a framework for statistical inference. Bootstrap methods solve
+this by empirically estimating the sampling distribution of relative
+weights.</p>
+</div>
+<div id="bootstrap-solution" class="section level3">
+<h3>Bootstrap Solution</h3>
+<p>Bootstrap resampling: 1. <strong>Creates multiple samples</strong>
+from your original data 2. <strong>Calculates RWA</strong> for each
+bootstrap sample<br />
+3. <strong>Estimates confidence intervals</strong> from the distribution
+of bootstrap results 4. <strong>Enables significance testing</strong> by
+examining whether CIs include zero</p>
+</div>
+</div>
+<div id="basic-bootstrap-analysis" class="section level2">
+<h2>Basic Bootstrap Analysis</h2>
+<div id="simple-bootstrap-example" class="section level3">
+<h3>Simple Bootstrap Example</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Bootstrap analysis with 1000 samples</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>result_bootstrap <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>      <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;gear&quot;</span>),</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>      <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>      <span class="at">n_bootstrap =</span> <span class="dv">1000</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>      <span class="at">conf_level =</span> <span class="fl">0.95</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co"># View results with confidence intervals</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>result_bootstrap<span class="sc">$</span>result</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Raw.RelWeight.CI.Lower</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt; 1        hp     0.2321744           29.79691    -             0.17918452</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2284797           29.32274    -             0.17787979</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; 3      disp     0.2221469           28.50999    -             0.16236804</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; 4      gear     0.0963886           12.37037    +             0.04436607</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Upper Raw.Significant</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; 1              0.2837136            TRUE</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt; 2              0.2828943            TRUE</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; 3              0.2876162            TRUE</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&gt; 4              0.1810951            TRUE</span></span></code></pre></div>
+</div>
+<div id="understanding-bootstrap-output" class="section level3">
+<h3>Understanding Bootstrap Output</h3>
+<p>The bootstrap analysis enhances the standard RWA output with:</p>
+<ul>
+<li><strong>Raw.RelWeight.CI.Lower/Upper</strong>: 95% confidence
+intervals for raw weights</li>
+<li><strong>Raw.Significant</strong>: Automatic significance flagging
+(CI doesn’t include zero)</li>
+</ul>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Bootstrap-specific information</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Bootstrap samples used:&quot;</span>, result_bootstrap<span class="sc">$</span>bootstrap<span class="sc">$</span>n_bootstrap, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; Bootstrap samples used: 1000</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co"># Detailed CI information</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="fu">print</span>(result_bootstrap<span class="sc">$</span>bootstrap<span class="sc">$</span>ci_results<span class="sc">$</span>raw_weights)</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 × 6</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt;   variable weight_index ci_lower ci_upper ci_method ci_type</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;           &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;  </span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.178     0.283 bca       raw    </span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.162     0.288 bca       raw    </span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.179     0.284 bca       raw    </span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0444    0.181 bca       raw</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co"># Identify significant predictors</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>significant_vars <span class="ot">&lt;-</span> result_bootstrap<span class="sc">$</span>result <span class="sc">%&gt;%</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>  <span class="fu">filter</span>(Raw.Significant <span class="sc">==</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>  <span class="fu">pull</span>(Variables)</span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Significant predictors:&quot;</span>, <span class="fu">paste</span>(significant_vars, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>))</span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; Significant predictors: hp, cyl, disp, gear</span></span></code></pre></div>
+</div>
+</div>
+<div id="advanced-bootstrap-features" class="section level2">
+<h2>Advanced Bootstrap Features</h2>
+<div id="comprehensive-bootstrap-analysis" class="section level3">
+<h3>Comprehensive Bootstrap Analysis</h3>
+<p>For detailed analysis including focal variable comparisons:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Comprehensive bootstrap with focal variable comparison</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>result_comprehensive <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>      <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;gear&quot;</span>, <span class="st">&quot;wt&quot;</span>),</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>      <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>      <span class="at">comprehensive =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>      <span class="at">focal =</span> <span class="st">&quot;wt&quot;</span>,  <span class="co"># Compare other variables to weight</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>      <span class="at">n_bootstrap =</span> <span class="dv">500</span>)  <span class="co"># Fewer samples for speed</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co"># Access all bootstrap results</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="fu">names</span>(result_comprehensive<span class="sc">$</span>bootstrap<span class="sc">$</span>ci_results)</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; [1] &quot;raw_weights&quot;       &quot;random_comparison&quot; &quot;focal_comparison&quot;</span></span></code></pre></div>
+</div>
+<div id="bootstrap-parameters" class="section level3">
+<h3>Bootstrap Parameters</h3>
+<p>Key parameters for bootstrap analysis:</p>
+<ul>
+<li><strong><code>n_bootstrap</code></strong>: Number of bootstrap
+samples (default: 1000)</li>
+<li><strong><code>conf_level</code></strong>: Confidence level (default:
+0.95)</li>
+<li><strong><code>focal</code></strong>: Focal variable for comparative
+analysis</li>
+<li><strong><code>comprehensive</code></strong>: Enable additional
+bootstrap tests</li>
+</ul>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Example with different parameters</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>custom_bootstrap <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>      <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>),</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>      <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>      <span class="at">n_bootstrap =</span> <span class="dv">2000</span>,  <span class="co"># More samples for precision</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>      <span class="at">conf_level =</span> <span class="fl">0.99</span>)   <span class="co"># 99% confidence intervals</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>custom_bootstrap<span class="sc">$</span>result</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Raw.RelWeight.CI.Lower</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; 1       cyl     0.3837012           50.51586    -              0.2523797</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; 2      disp     0.3758646           49.48414    -              0.2526669</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Upper Raw.Significant</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; 1              0.4608781            TRUE</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; 2              0.4612490            TRUE</span></span></code></pre></div>
+</div>
+</div>
+<div id="rescaled-weight-confidence-intervals" class="section level2">
+<h2>Rescaled Weight Confidence Intervals</h2>
+<div id="important-considerations" class="section level3">
+<h3>Important Considerations</h3>
+<p><strong>Rescaled weight confidence intervals should be interpreted
+with caution</strong> due to compositional data constraints. They are
+not recommended for formal statistical inference.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Rescaled CIs (use with caution)</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>result_rescaled_ci <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>      <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>),</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>      <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>      <span class="at">include_rescaled_ci =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>      <span class="at">n_bootstrap =</span> <span class="dv">500</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co"># Note the warning message about interpretation</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>result_rescaled_ci<span class="sc">$</span>result</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Raw.RelWeight.CI.Lower</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; 1      disp     0.2793550           36.37966    -              0.2068173</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2723144           35.46279    -              0.2115953</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; 3        hp     0.2162184           28.15755    -              0.1387584</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Upper Raw.Significant Rescaled.RelWeight.CI.Lower</span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="co">#&gt; 1              0.3400585            TRUE                    30.27135</span></span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt; 2              0.3278647            TRUE                    30.37038</span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co">#&gt; 3              0.2631454            TRUE                    21.05975</span></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt;   Rescaled.RelWeight.CI.Upper</span></span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="co">#&gt; 1                    43.62828</span></span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a><span class="co">#&gt; 2                    42.92702</span></span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a><span class="co">#&gt; 3                    37.39395</span></span></code></pre></div>
+</div>
+<div id="why-rescaled-cis-are-problematic" class="section level3">
+<h3>Why Rescaled CIs Are Problematic</h3>
+<p>Rescaled weights are <strong>compositional data</strong> (they sum to
+100%), which creates dependencies between variables. This violates
+assumptions needed for independent confidence intervals.</p>
+<p><strong>Recommendation</strong>: Focus on <strong>raw weight
+confidence intervals</strong> for statistical inference.</p>
+</div>
+</div>
+<div id="real-world-applications" class="section level2">
+<h2>Real-World Applications</h2>
+<div id="diamond-price-analysis" class="section level3">
+<h3>Diamond Price Analysis</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Analyze diamond price drivers</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>diamonds_subset <span class="ot">&lt;-</span> diamonds <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="fu">select</span>(price, carat, depth, table, x, y, z) <span class="sc">%&gt;%</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="fu">sample_n</span>(<span class="dv">1000</span>)  <span class="co"># Sample for faster computation</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>diamond_rwa <span class="ot">&lt;-</span> diamonds_subset <span class="sc">%&gt;%</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;price&quot;</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>      <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;carat&quot;</span>, <span class="st">&quot;depth&quot;</span>, <span class="st">&quot;table&quot;</span>, <span class="st">&quot;x&quot;</span>, <span class="st">&quot;y&quot;</span>, <span class="st">&quot;z&quot;</span>),</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>      <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>      <span class="at">applysigns =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>      <span class="at">n_bootstrap =</span> <span class="dv">500</span>)</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="fu">print</span>(diamond_rwa<span class="sc">$</span>result)</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Sign.Rescaled.RelWeight</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="co">#&gt; 1     carat   0.248201410          28.691293    +               28.691293</span></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="co">#&gt; 2         y   0.203994958          23.581168    +               23.581168</span></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="co">#&gt; 3         x   0.202886155          23.452994    +               23.452994</span></span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="co">#&gt; 4         z   0.202115201          23.363874    +               23.363874</span></span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co">#&gt; 5     table   0.005545853           0.641083    +                0.641083</span></span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="co">#&gt; 6     depth   0.002332141           0.269588    -               -0.269588</span></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Lower Raw.RelWeight.CI.Upper Raw.Significant</span></span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="co">#&gt; 1           0.2324033452            0.264579409            TRUE</span></span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="co">#&gt; 2           0.1977835375            0.209208036            TRUE</span></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="co">#&gt; 3           0.1967203566            0.207977647            TRUE</span></span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="co">#&gt; 4           0.1955910853            0.207116344            TRUE</span></span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="co">#&gt; 5           0.0008624156            0.008449391            TRUE</span></span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="co">#&gt; 6          -0.0006655409            0.003155567           FALSE</span></span></code></pre></div>
+</div>
+<div id="interpreting-results" class="section level3">
+<h3>Interpreting Results</h3>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Focus on significant predictors (results are already sorted by importance)</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>significant_drivers <span class="ot">&lt;-</span> diamond_rwa<span class="sc">$</span>result <span class="sc">%&gt;%</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="fu">filter</span>(Raw.Significant <span class="sc">==</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="fu">select</span>(Variables, Rescaled.RelWeight, Sign.Rescaled.RelWeight)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Significant diamond price drivers (sorted by importance):</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; Significant diamond price drivers (sorted by importance):</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="fu">print</span>(significant_drivers)</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt;   Variables Rescaled.RelWeight Sign.Rescaled.RelWeight</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; 1     carat          28.691293               28.691293</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; 2         y          23.581168               23.581168</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; 3         x          23.452994               23.452994</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; 4         z          23.363874               23.363874</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt; 5     table           0.641083                0.641083</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Model R-squared:&quot;</span>, <span class="fu">round</span>(diamond_rwa<span class="sc">$</span>rsquare, <span class="dv">3</span>))</span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="co">#&gt; Model R-squared: 0.865</span></span></code></pre></div>
+</div>
+</div>
+<div id="best-practices" class="section level2">
+<h2>Best Practices</h2>
+<div id="sample-size-guidelines" class="section level3">
+<h3>1. Sample Size Guidelines</h3>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Check your sample size</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>n_obs <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span> </span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="fu">select</span>(mpg, cyl, disp, hp, gear) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="fu">na.omit</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="fu">nrow</span>()</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Sample size:&quot;</span>, n_obs)</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; Sample size: 32</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Recommended bootstrap samples:&quot;</span>, <span class="fu">min</span>(<span class="dv">2000</span>, n_obs <span class="sc">*</span> <span class="dv">10</span>))</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; Recommended bootstrap samples: 320</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="co"># Rule of thumb: At least 1000 bootstrap samples, more for smaller datasets</span></span></code></pre></div>
+</div>
+<div id="confidence-interval-interpretation" class="section level3">
+<h3>2. Confidence Interval Interpretation</h3>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Examine CI characteristics</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>ci_data <span class="ot">&lt;-</span> result_bootstrap<span class="sc">$</span>bootstrap<span class="sc">$</span>ci_results<span class="sc">$</span>raw_weights</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">head</span>(ci_data))</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 × 6</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt;   variable weight_index ci_lower ci_upper ci_method ci_type</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;           &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;  </span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.178     0.283 bca       raw    </span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.162     0.288 bca       raw    </span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.179     0.284 bca       raw    </span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0444    0.181 bca       raw</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co"># Assess precision</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>ci_analysis <span class="ot">&lt;-</span> ci_data <span class="sc">%&gt;%</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>    <span class="at">significant =</span> ci_lower <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">|</span> ci_upper <span class="sc">&lt;</span> <span class="dv">0</span>,</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>    <span class="at">ci_width =</span> ci_upper <span class="sc">-</span> ci_lower,</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>    <span class="at">precision =</span> <span class="fu">case_when</span>(</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>      ci_width <span class="sc">&lt;</span> <span class="fl">0.05</span> <span class="sc">~</span> <span class="st">&quot;High precision&quot;</span>,</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>      ci_width <span class="sc">&lt;</span> <span class="fl">0.15</span> <span class="sc">~</span> <span class="st">&quot;Medium precision&quot;</span>, </span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;Low precision&quot;</span></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>    )</span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>  )</span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="fu">print</span>(ci_analysis)</span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 × 9</span></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="co">#&gt;   variable weight_index ci_lower ci_upper ci_method ci_type significant ci_width</span></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;           &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;   &lt;lgl&gt;          &lt;dbl&gt;</span></span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.178     0.283 bca       raw     TRUE           0.105</span></span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.162     0.288 bca       raw     TRUE           0.125</span></span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.179     0.284 bca       raw     TRUE           0.105</span></span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0444    0.181 bca       raw     TRUE           0.137</span></span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a><span class="co">#&gt; # ℹ 1 more variable: precision &lt;chr&gt;</span></span></code></pre></div>
+</div>
+<div id="bootstrap-method-selection" class="section level3">
+<h3>3. Bootstrap Method Selection</h3>
+<p>The package automatically selects the best available bootstrap CI
+method:</p>
+<ol style="list-style-type: decimal">
+<li><strong>BCA (Bias-Corrected and Accelerated)</strong> - Preferred
+when possible</li>
+<li><strong>Percentile</strong> - Fallback if BCA fails</li>
+<li><strong>Basic bootstrap</strong> - Final fallback option</li>
+</ol>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Check which methods were used</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>ci_methods <span class="ot">&lt;-</span> result_bootstrap<span class="sc">$</span>bootstrap<span class="sc">$</span>ci_results<span class="sc">$</span>raw_weights <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="fu">count</span>(ci_method)</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="fu">print</span>(ci_methods)</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; # A tibble: 1 × 2</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt;   ci_method     n</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;     &lt;int&gt;</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; 1 bca           4</span></span></code></pre></div>
+</div>
+</div>
+<div id="performance-considerations" class="section level2">
+<h2>Performance Considerations</h2>
+<div id="bootstrap-speed-tips" class="section level3">
+<h3>Bootstrap Speed Tips</h3>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># For large datasets or many predictors, consider:</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co"># 1. Reduce bootstrap samples for initial exploration</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>quick_result <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>  <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>, </span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>      <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>), </span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>      <span class="at">bootstrap =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>      <span class="at">n_bootstrap =</span> <span class="dv">500</span>)  <span class="co"># Faster</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co"># 2. Use comprehensive analysis only when needed</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co"># comprehensive = TRUE adds computational overhead</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co"># 3. Consider parallel processing for very large analyses</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co"># (not currently implemented but could be future enhancement)</span></span></code></pre></div>
+</div>
+<div id="memory-usage" class="section level3">
+<h3>Memory Usage</h3>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Bootstrap objects can be large - access specific components</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">str</span>(result_bootstrap<span class="sc">$</span>bootstrap, <span class="at">max.level =</span> <span class="dv">1</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; List of 6</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt;  $ boot_object  :List of 11</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt;   ..- attr(*, &quot;class&quot;)= chr &quot;boot&quot;</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt;   ..- attr(*, &quot;boot_type&quot;)= chr &quot;boot&quot;</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt;  $ ci_results   :List of 1</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt;  $ n_bootstrap  : num 1000</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt;  $ conf_level   : num 0.95</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt;  $ comprehensive: logi FALSE</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt;  $ focal        : NULL</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co"># For memory efficiency, extract only needed results</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>ci_summary <span class="ot">&lt;-</span> result_bootstrap<span class="sc">$</span>bootstrap<span class="sc">$</span>ci_results<span class="sc">$</span>raw_weights <span class="sc">%&gt;%</span></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>  <span class="fu">select</span>(variable, ci_lower, ci_upper, ci_method)</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="fu">print</span>(ci_summary)</span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 × 4</span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a><span class="co">#&gt;   variable ci_lower ci_upper ci_method</span></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;    </span></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="co">#&gt; 1 cyl        0.178     0.283 bca      </span></span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="co">#&gt; 2 disp       0.162     0.288 bca      </span></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#&gt; 3 hp         0.179     0.284 bca      </span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a><span class="co">#&gt; 4 gear       0.0444    0.181 bca</span></span></code></pre></div>
+</div>
+</div>
+<div id="troubleshooting" class="section level2">
+<h2>Troubleshooting</h2>
+<div id="common-bootstrap-issues" class="section level3">
+<h3>Common Bootstrap Issues</h3>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># 1. Check for perfect multicollinearity</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>cor_check <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="fu">select</span>(cyl, disp, hp, gear) <span class="sc">%&gt;%</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="fu">cor</span>()</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co"># Look for correlations = 1.0 (excluding diagonal)</span></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>perfect_cor <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">abs</span>(cor_check) <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> cor_check <span class="sc">!=</span> <span class="fu">diag</span>(<span class="fu">diag</span>(cor_check)), <span class="at">arr.ind =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(perfect_cor) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Perfect multicollinearity detected - remove redundant variables&quot;</span>)</span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;No perfect multicollinearity detected&quot;</span>)</span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>}</span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a><span class="co">#&gt; No perfect multicollinearity detected</span></span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a><span class="co"># 2. Ensure adequate sample size</span></span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a>min_sample_size <span class="ot">&lt;-</span> <span class="dv">5</span> <span class="sc">*</span> <span class="fu">length</span>(<span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;gear&quot;</span>))  <span class="co"># 5 obs per predictor</span></span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a>actual_sample_size <span class="ot">&lt;-</span> <span class="fu">nrow</span>(<span class="fu">na.omit</span>(mtcars[<span class="fu">c</span>(<span class="st">&quot;mpg&quot;</span>, <span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;gear&quot;</span>)]))</span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a></span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Minimum recommended sample size:&quot;</span>, min_sample_size)</span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a><span class="co">#&gt; Minimum recommended sample size: 20</span></span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Actual sample size:&quot;</span>, actual_sample_size)</span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a><span class="co">#&gt; Actual sample size: 32</span></span></code></pre></div>
+</div>
+</div>
+<div id="reporting-bootstrap-results" class="section level2">
+<h2>Reporting Bootstrap Results</h2>
+<div id="standard-reporting-format" class="section level3">
+<h3>Standard Reporting Format</h3>
+<p>When reporting bootstrap RWA results, include:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Sample size</strong> and missing data handling</li>
+<li><strong>Bootstrap parameters</strong> (number of samples, confidence
+level)</li>
+<li><strong>CI method</strong> used (BCA, percentile, basic)</li>
+<li><strong>Significant predictors</strong> with confidence
+intervals</li>
+<li><strong>Model fit</strong> (R-squared)</li>
+</ol>
+</div>
+<div id="example-report" class="section level3">
+<h3>Example Report</h3>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># Generate a summary report</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>report_data <span class="ot">&lt;-</span> result_bootstrap<span class="sc">$</span>result <span class="sc">%&gt;%</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="fu">filter</span>(Raw.Significant <span class="sc">==</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(Rescaled.RelWeight)) <span class="sc">%&gt;%</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="fu">select</span>(Variables, Rescaled.RelWeight, Raw.RelWeight.CI.Lower, Raw.RelWeight.CI.Upper)</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Relative Weights Analysis Results</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt; Relative Weights Analysis Results</span></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;=================================</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt; =================================</span></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Sample size:&quot;</span>, result_bootstrap<span class="sc">$</span>n, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a><span class="co">#&gt; Sample size: 32</span></span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Bootstrap samples:&quot;</span>, result_bootstrap<span class="sc">$</span>bootstrap<span class="sc">$</span>n_bootstrap, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a><span class="co">#&gt; Bootstrap samples: 1000</span></span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Model R-squared:&quot;</span>, <span class="fu">round</span>(result_bootstrap<span class="sc">$</span>rsquare, <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a><span class="co">#&gt; Model R-squared: 0.779</span></span>
+<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Significant Predictors:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a><span class="co">#&gt; Significant Predictors:</span></span>
+<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a><span class="fu">print</span>(report_data)</span>
+<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a><span class="co">#&gt;   Variables Rescaled.RelWeight Raw.RelWeight.CI.Lower Raw.RelWeight.CI.Upper</span></span>
+<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a><span class="co">#&gt; 1        hp           29.79691             0.17918452              0.2837136</span></span>
+<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a><span class="co">#&gt; 2       cyl           29.32274             0.17787979              0.2828943</span></span>
+<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a><span class="co">#&gt; 3      disp           28.50999             0.16236804              0.2876162</span></span>
+<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a><span class="co">#&gt; 4      gear           12.37037             0.04436607              0.1810951</span></span></code></pre></div>
+</div>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<p><strong>Bootstrap Methods in RWA:</strong></p>
+<ul>
+<li>Tonidandel, S., LeBreton, J. M., &amp; Johnson, J. W. (2009).
+Determining the statistical significance of relative weights.
+<em>Psychological Methods</em>, 14(4), 387-399.</li>
+</ul>
+<p><strong>General Bootstrap Theory:</strong></p>
+<ul>
+<li>Efron, B., &amp; Tibshirani, R. J. (1993). <em>An introduction to
+the bootstrap</em>. Chapman &amp; Hall/CRC.</li>
+</ul>
+<p><strong>Compositional Data Analysis:</strong></p>
+<ul>
+<li>Aitchison, J. (1986). <em>The statistical analysis of compositional
+data</em>. Chapman &amp; Hall.</li>
+</ul>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>Bootstrap confidence intervals provide a robust solution for
+statistical inference in Relative Weights Analysis. By following the
+guidelines in this vignette, researchers can:</p>
+<ul>
+<li>Determine statistical significance of predictor importance</li>
+<li>Report confidence intervals with appropriate interpretations<br />
+</li>
+<li>Avoid common pitfalls in bootstrap analysis</li>
+<li>Apply best practices for reliable results</li>
+</ul>
+<p>The bootstrap functionality in the <code>rwa</code> package
+represents a significant advancement in making RWA a complete tool for
+both exploratory analysis and confirmatory research.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

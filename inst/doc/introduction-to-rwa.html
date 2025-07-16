@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Martin Chan" />
+
+<meta name="date" content="2025-07-16" />
+
+<title>Introduction to Relative Weights Analysis with the rwa Package</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to Relative Weights Analysis
+with the rwa Package</h1>
+<h4 class="author">Martin Chan</h4>
+<h4 class="date">2025-07-16</h4>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(rwa)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p><strong>Relative Weights Analysis (RWA)</strong> is a powerful method
+for determining the relative importance of predictor variables in
+multiple regression models, particularly when dealing with
+multicollinearity. This vignette provides a comprehensive guide to using
+the <code>rwa</code> package, explaining the methodology, interpreting
+results, exploring advanced features, and evaluating the theoretical
+foundations and validity of the method.</p>
+</div>
+<div id="background-and-methodology" class="section level2">
+<h2>Background and Methodology</h2>
+<div id="what-is-relative-weights-analysis" class="section level3">
+<h3>What is Relative Weights Analysis?</h3>
+<p>Relative Weights Analysis addresses a fundamental problem in multiple
+regression: when predictor variables are correlated with each other
+(multicollinearity), it becomes difficult to determine the true
+contribution of each variable to the outcome. Traditional regression
+coefficients can be misleading, unstable, or difficult to interpret in
+the presence of multicollinearity.</p>
+<p>RWA decomposes the total variance predicted in a regression model
+(R²) into weights that accurately reflect the proportional contribution
+of the various predictor variables. The method implemented in this
+package is based on <strong>Tonidandel and LeBreton (2015)</strong>,
+with its original roots in <strong>Johnson (2000)</strong>.</p>
+</div>
+<div id="how-rwa-works" class="section level3">
+<h3>How RWA Works</h3>
+<p>The core insight of RWA is to create a set of orthogonal
+(uncorrelated) variables that are maximally related to the original
+predictors, then use these in a regression model. The process
+involves:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Eigenvalue decomposition</strong> of the predictor
+correlation matrix</li>
+<li><strong>Transformation</strong> of predictors into orthogonal
+components</li>
+<li><strong>Regression</strong> using the transformed predictors</li>
+<li><strong>Decomposition</strong> of R² into relative weights</li>
+</ol>
+<p>This approach allows us to determine each variable’s unique
+contribution to the explained variance, even when predictors are highly
+correlated.</p>
+</div>
+<div id="when-to-use-rwa" class="section level3">
+<h3>When to Use RWA</h3>
+<p>RWA is particularly useful when:</p>
+<ul>
+<li><strong>Multicollinearity</strong> is present among predictors</li>
+<li>You need to <strong>rank variables</strong> by importance</li>
+<li><strong>Traditional regression coefficients</strong> are unstable or
+difficult to interpret</li>
+<li>You want to understand <strong>proportional contributions</strong>
+to explained variance</li>
+<li>Conducting <strong>key drivers analysis</strong> in market research
+or business analytics</li>
+</ul>
+</div>
+</div>
+<div id="theoretical-foundation-and-methodological-evaluation" class="section level2">
+<h2>Theoretical Foundation and Methodological Evaluation</h2>
+<div id="core-methodological-insight" class="section level3">
+<h3>Core Methodological Insight</h3>
+<p>RWA addresses multicollinearity by attributing <strong>shared
+(collinear) variance between predictors</strong> to those predictors in
+proportion to their structure with the outcome. Unlike traditional
+regression coefficients that reflect only unique contributions, RWA
+considers both <strong>direct and indirect (shared)
+effects</strong>.</p>
+<p>The <strong>Johnson (2000)</strong> algorithm performs an
+<strong>eigenvalue decomposition</strong> of the predictor correlation
+matrix to create uncorrelated principal components, then regresses the
+outcome on these components. This procedure yields weights virtually
+identical to what would be obtained by averaging a predictor’s
+incremental R² contribution over <em>all possible subsets</em> of
+predictors (the logic used in dominance analysis), but <strong>without
+brute-force search</strong> over subsets, making it computationally
+efficient.</p>
+</div>
+<div id="demonstrating-rwas-theoretical-properties" class="section level3">
+<h3>Demonstrating RWA’s Theoretical Properties</h3>
+<p>Let’s demonstrate this with a controlled example where we know the
+true relationships:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Create controlled scenario to demonstrate RWA&#39;s theoretical properties</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">200</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co"># Generate predictors with known correlation structure</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>x1 <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>x2 <span class="ot">&lt;-</span> <span class="fl">0.7</span> <span class="sc">*</span> x1 <span class="sc">+</span> <span class="fl">0.3</span> <span class="sc">*</span> <span class="fu">rnorm</span>(n)  <span class="co"># r ≈ 0.7 with x1</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>x3 <span class="ot">&lt;-</span> <span class="fl">0.5</span> <span class="sc">*</span> x1 <span class="sc">+</span> <span class="fl">0.8</span> <span class="sc">*</span> <span class="fu">rnorm</span>(n)  <span class="co"># r ≈ 0.5 with x1</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>x4 <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n)                    <span class="co"># Independent</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co"># True population model with known coefficients</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fl">0.6</span> <span class="sc">*</span> x1 <span class="sc">+</span> <span class="fl">0.4</span> <span class="sc">*</span> x2 <span class="sc">+</span> <span class="fl">0.3</span> <span class="sc">*</span> x3 <span class="sc">+</span> <span class="fl">0.2</span> <span class="sc">*</span> x4 <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="at">sd =</span> <span class="fl">0.5</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>theory_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">y =</span> y, <span class="at">x1 =</span> x1, <span class="at">x2 =</span> x2, <span class="at">x3 =</span> x3, <span class="at">x4 =</span> x4)</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co"># Compare traditional regression vs RWA</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>lm_theory <span class="ot">&lt;-</span> <span class="fu">lm</span>(y <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> x3 <span class="sc">+</span> x4, <span class="at">data =</span> theory_data)</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>rwa_theory <span class="ot">&lt;-</span> <span class="fu">rwa</span>(theory_data, <span class="st">&quot;y&quot;</span>, <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>, <span class="st">&quot;x2&quot;</span>, <span class="st">&quot;x3&quot;</span>, <span class="st">&quot;x4&quot;</span>))</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co"># Show how multicollinearity affects traditional coefficients</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;True population contributions (designed into simulation):</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&gt; True population contributions (designed into simulation):</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>true_contributions <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.6</span>, <span class="fl">0.4</span>, <span class="fl">0.3</span>, <span class="fl">0.2</span>)</span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="fu">names</span>(true_contributions) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>, <span class="st">&quot;x2&quot;</span>, <span class="st">&quot;x3&quot;</span>, <span class="st">&quot;x4&quot;</span>)</span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="fu">print</span>(true_contributions)</span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt;  x1  x2  x3  x4 </span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt; 0.6 0.4 0.3 0.2</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Standardized regression coefficients (distorted by multicollinearity):</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&gt; Standardized regression coefficients (distorted by multicollinearity):</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a>std_betas <span class="ot">&lt;-</span> <span class="fu">summary</span>(lm_theory)<span class="sc">$</span>coefficients[<span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>, <span class="st">&quot;Estimate&quot;</span>]</span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="fu">names</span>(std_betas) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>, <span class="st">&quot;x2&quot;</span>, <span class="st">&quot;x3&quot;</span>, <span class="st">&quot;x4&quot;</span>)</span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">round</span>(std_betas, <span class="dv">3</span>))</span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co">#&gt;    x1    x2    x3    x4 </span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a><span class="co">#&gt; 0.449 0.586 0.285 0.164</span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a></span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">RWA weights (better reflect true importance despite correlations):</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a><span class="co">#&gt; RWA weights (better reflect true importance despite correlations):</span></span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a>rwa_weights_theory <span class="ot">&lt;-</span> rwa_theory<span class="sc">$</span>result<span class="sc">$</span>Raw.RelWeight</span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a><span class="fu">names</span>(rwa_weights_theory) <span class="ot">&lt;-</span> rwa_theory<span class="sc">$</span>result<span class="sc">$</span>Predictors</span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">round</span>(rwa_weights_theory, <span class="dv">3</span>))</span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a><span class="co">#&gt; [1] 0.306 0.304 0.155 0.021</span></span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a></span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a><span class="co"># Calculate correlation between methods and true values</span></span>
+<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a>cor_with_true <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a>  <span class="at">Method =</span> <span class="fu">c</span>(<span class="st">&quot;Std_Betas&quot;</span>, <span class="st">&quot;RWA_Weights&quot;</span>),</span>
+<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a>  <span class="at">Correlation_with_True =</span> <span class="fu">c</span>(</span>
+<span id="cb2-50"><a href="#cb2-50" tabindex="-1"></a>    <span class="fu">cor</span>(<span class="fu">abs</span>(std_betas), true_contributions),</span>
+<span id="cb2-51"><a href="#cb2-51" tabindex="-1"></a>    <span class="fu">cor</span>(rwa_weights_theory[<span class="fu">names</span>(true_contributions)], true_contributions)</span>
+<span id="cb2-52"><a href="#cb2-52" tabindex="-1"></a>  )</span>
+<span id="cb2-53"><a href="#cb2-53" tabindex="-1"></a>)</span>
+<span id="cb2-54"><a href="#cb2-54" tabindex="-1"></a><span class="fu">print</span>(<span class="st">&quot;Correlation with true population values:&quot;</span>)</span>
+<span id="cb2-55"><a href="#cb2-55" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Correlation with true population values:&quot;</span></span>
+<span id="cb2-56"><a href="#cb2-56" tabindex="-1"></a><span class="fu">print</span>(cor_with_true)</span>
+<span id="cb2-57"><a href="#cb2-57" tabindex="-1"></a><span class="co">#&gt;        Method Correlation_with_True</span></span>
+<span id="cb2-58"><a href="#cb2-58" tabindex="-1"></a><span class="co">#&gt; 1   Std_Betas             0.6924877</span></span>
+<span id="cb2-59"><a href="#cb2-59" tabindex="-1"></a><span class="co">#&gt; 2 RWA_Weights                    NA</span></span></code></pre></div>
+</div>
+<div id="current-validity-why-rwa-remains-relevant" class="section level3">
+<h3>Current Validity: Why RWA Remains Relevant</h3>
+<p><strong>RWA remains a widely accepted and useful method for
+evaluating predictor importance under multicollinearity.</strong> Since
+its introduction, numerous studies have validated that RWA provides a
+fair assessment of each variable’s importance even in high-correlation
+settings.</p>
+<p><strong>Evidence from research practice:</strong> -
+<strong>Organizational Psychology</strong>: Determining which employee
+factors predict performance when intercorrelated - <strong>Marketing
+Research</strong>: Key driver analysis where product attributes tend to
+move together<br />
+- <strong>Educational Research</strong>: Assessing cognitive abilities
+that naturally correlate - <strong>Healthcare Analytics</strong>:
+Understanding risk factors that often co-occur</p>
+<p><strong>Methodological validation:</strong> 1. <strong>RWA reveals
+important predictors</strong> that regression beta weights obscure due
+to multicollinearity 2. <strong>Rankings from RWA correlate &gt;
+0.99</strong> with dominance analysis in most scenarios 3.
+<strong>Bootstrap confidence intervals</strong> provide robust
+significance testing 4. <strong>Computational efficiency</strong> allows
+analysis of large predictor sets</p>
+</div>
+</div>
+<div id="basic-usage" class="section level2">
+<h2>Basic Usage</h2>
+<div id="simple-example-with-mtcars" class="section level3">
+<h3>Simple Example with mtcars</h3>
+<p>Let’s start with a basic example using the built-in
+<code>mtcars</code> dataset to predict fuel efficiency
+(<code>mpg</code>):</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Basic RWA</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>result_basic <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>      <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;gear&quot;</span>))</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co"># View the results</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>result_basic<span class="sc">$</span>result</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; 1        hp     0.2321744           29.79691    -</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2284797           29.32274    -</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; 3      disp     0.2221469           28.50999    -</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; 4      gear     0.0963886           12.37037    +</span></span></code></pre></div>
+</div>
+<div id="understanding-the-output" class="section level3">
+<h3>Understanding the Output</h3>
+<p>The basic output includes several key components:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Predictor variables used</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>result_basic<span class="sc">$</span>predictors</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;cyl&quot;  &quot;disp&quot; &quot;hp&quot;   &quot;gear&quot;</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co"># Model R-squared</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>result_basic<span class="sc">$</span>rsquare</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; [1] 0.7791896</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co"># Number of complete observations</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>result_basic<span class="sc">$</span>n</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; [1] 32</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co"># Correlation matrices (for advanced users)</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="fu">str</span>(result_basic<span class="sc">$</span>RXX)  <span class="co"># Predictor correlation matrix</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt;  num [1:4, 1:4] 1 0.902 0.832 -0.493 0.902 ...</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt;  - attr(*, &quot;dimnames&quot;)=List of 2</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt;   ..$ : chr [1:4] &quot;cyl&quot; &quot;disp&quot; &quot;hp&quot; &quot;gear&quot;</span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt;   ..$ : chr [1:4] &quot;cyl&quot; &quot;disp&quot; &quot;hp&quot; &quot;gear&quot;</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="fu">str</span>(result_basic<span class="sc">$</span>RXY)  <span class="co"># Predictor-outcome correlations</span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt;  Named num [1:4] -0.852 -0.848 -0.776 0.48</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt;  - attr(*, &quot;names&quot;)= chr [1:4] &quot;cyl&quot; &quot;disp&quot; &quot;hp&quot; &quot;gear&quot;</span></span></code></pre></div>
+</div>
+<div id="interpreting-the-results-table" class="section level3">
+<h3>Interpreting the Results Table</h3>
+<p>The main results table contains:</p>
+<ul>
+<li><strong>Variables</strong>: Names of predictor variables</li>
+<li><strong>Raw.RelWeight</strong>: Raw relative weights (sum to
+R²)</li>
+<li><strong>Rescaled.RelWeight</strong>: Rescaled weights as percentages
+(sum to 100%)</li>
+<li><strong>Sign</strong>: Direction of relationship with outcome
+(+/-)</li>
+</ul>
+<p>By default, results are automatically sorted by rescaled relative
+weights in descending order, making it easy to identify the most
+important predictors:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Results are sorted by default (most important first)</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>result_basic<span class="sc">$</span>result</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; 1        hp     0.2321744           29.79691    -</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2284797           29.32274    -</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; 3      disp     0.2221469           28.50999    -</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; 4      gear     0.0963886           12.37037    +</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co"># Raw weights sum to R-squared</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="fu">sum</span>(result_basic<span class="sc">$</span>result<span class="sc">$</span>Raw.RelWeight)</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; [1] 0.7791896</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>result_basic<span class="sc">$</span>rsquare</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; [1] 0.7791896</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co"># Rescaled weights sum to 100%</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="fu">sum</span>(result_basic<span class="sc">$</span>result<span class="sc">$</span>Rescaled.RelWeight)</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; [1] 100</span></span></code></pre></div>
+</div>
+<div id="controlling-output-sorting" class="section level3">
+<h3>Controlling Output Sorting</h3>
+<p>You can control whether results are sorted using the
+<code>sort</code> parameter:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Default behavior: sorted by importance (descending)</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>result_sorted <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>, <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;gear&quot;</span>))</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>result_sorted<span class="sc">$</span>result</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; 1        hp     0.2321744           29.79691    -</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2284797           29.32274    -</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; 3      disp     0.2221469           28.50999    -</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; 4      gear     0.0963886           12.37037    +</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co"># Preserve original predictor order</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>result_unsorted <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>  <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>, <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;gear&quot;</span>), <span class="at">sort =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>result_unsorted<span class="sc">$</span>result</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign</span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co">#&gt; 1       cyl     0.2284797           29.32274    -</span></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt; 2      disp     0.2221469           28.50999    -</span></span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="co">#&gt; 3        hp     0.2321744           29.79691    -</span></span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a><span class="co">#&gt; 4      gear     0.0963886           12.37037    +</span></span></code></pre></div>
+</div>
+</div>
+<div id="advanced-features" class="section level2">
+<h2>Advanced Features</h2>
+<div id="adding-signs-to-weights" class="section level3">
+<h3>Adding Signs to Weights</h3>
+<p>The <code>applysigns</code> parameter adds directional information to
+help interpret whether variables positively or negatively influence the
+outcome:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>result_signs <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>      <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;gear&quot;</span>),</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>      <span class="at">applysigns =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>result_signs<span class="sc">$</span>result</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Sign.Rescaled.RelWeight</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; 1        hp     0.2321744           29.79691    -               -29.79691</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2284797           29.32274    -               -29.32274</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; 3      disp     0.2221469           28.50999    -               -28.50999</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; 4      gear     0.0963886           12.37037    +                12.37037</span></span></code></pre></div>
+</div>
+<div id="visualization" class="section level3">
+<h3>Visualization</h3>
+<p>The package allows you to visualize the relative importance by piping
+the results to <code>plot_rwa()</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Generate RWA results </span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>rwa_result <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>      <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;gear&quot;</span>, <span class="st">&quot;wt&quot;</span>))</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co"># Create plot</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>rwa_result <span class="sc">%&gt;%</span> <span class="fu">plot_rwa</span>()</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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AOgEi6Z9wACATrBo2gcMAOgEi6Z9wACATrBo2gcMAOgEi6Z9nJ4BrmZZdvb69UuZ4rLad+18lj136uEDsxIsmvZBNcDuO9sNU9a+s6vZxevXLxi1m+2188+V+0B3CBBaWzk1A1w68+L161fkH/P6unlr9oEOESC0ttLMAIcP1vPdt7fyZ3/21srr281S+r44LfZr5y86b2GA7jGb5lpFwyvAk7v5k5V1sdFXgJcEIQbQ3R17AUAXqKvMqroW0dAAu+8+/e0vbh8+3AruAkkWtfIvXCz2XMAguIvMoriW0dAA+/d/d/+/3vnd/e1ZDLCo536umikgPTC+dv7sKUYORGEWxbWMpoPgx3///cOHv7gdNAhezLLsBXG2Nz2fS4Xi1SuMAbrHDIJrG00N8GxFjwLCrwCLVveLRacHBugoMwiubTQ1gJoDen07P3wQOAtU6rwcAlTuDYDuMIviWsap3QletHeAr51/Qb5XG3l3GPrvHsGiaR/4LRCgEyya9gEDADrBomkfMACgEyya9gEDADrBomkfMACgEyya9gEDADrBomkfMACgEyya9gEDADrBomkfMACgEyya9gEDADrBomkfMACgEyya9gEDADrBomkfMACgEyya9gEDADrBomkfMACgEyya9gEDADrBomkfMACgEyya9gEDADrBomkfMACgEyya9gEDADrBomkfMACgEyya9gEDADrBomkfMACgEyya9gEDADrBomkfJ2cAADoADACSBgYASQMDgKSBAUDSwAAgaWAAkDQwAEgaGAAkDQwAkgYGAEkzgwG6wEvcFSDQobp2qKpH1XV2A3SCl7grQKBDde1QVafVFQZoDR2qa4eqmrgBADgeGAAkDQwAkgYGAEkDA4CkmWMD7L61srKe5/v3Vm495a7LdHbf2e5IXTtRSU2DL3V+DbD/3la++/bW4YP1/Mlt7spM5dnK69t5J+raiUpqmnyp82uAZ7LRj9f372/rE0Grefzav4g6dqKunaikotGXOr8GkIirwO67T9XFoO3IGHWirp2opKHBlzrXBjh8cDd/dqsb8ZKx6kRdO1FJQ4MvdT4N8Hhl5bYc/dztwAlL1xVXgJMg7SvA7lvreXe6rLsYA8SnwZc6vwbQ+lfdoC5MWsgYdaKunaikocGXOr8GeLIiWe/KtDXuA5wASd8HAKABMABIGhgAJA0MAJIG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" width="100%" /></p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co"># The rescaled relative weights</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>rwa_result<span class="sc">$</span>result</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; 1        wt    0.23642417          27.778646    -</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; 2       cyl    0.18833374          22.128264    -</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; 3        hp    0.18809142          22.099792    -</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; 4      disp    0.16479802          19.362936    -</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; 5      gear    0.07345304           8.630361    +</span></span></code></pre></div>
+</div>
+</div>
+<div id="bootstrap-confidence-intervals" class="section level2">
+<h2>Bootstrap Confidence Intervals</h2>
+<p>The <code>rwa</code> package includes powerful bootstrap
+functionality for determining the statistical significance of relative
+weights. For detailed coverage of bootstrap methods, see the dedicated
+vignette:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">vignette</span>(<span class="st">&quot;bootstrap-confidence-intervals&quot;</span>, <span class="at">package =</span> <span class="st">&quot;rwa&quot;</span>)</span></code></pre></div>
+<div id="quick-bootstrap-example" class="section level3">
+<h3>Quick Bootstrap Example</h3>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Basic bootstrap analysis</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>bootstrap_result <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>      <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>),</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>      <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>      <span class="at">n_bootstrap =</span> <span class="dv">500</span>)  <span class="co"># Reduced for speed</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co"># View significant predictors</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>bootstrap_result<span class="sc">$</span>result <span class="sc">%&gt;%</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>  <span class="fu">filter</span>(Raw.Significant <span class="sc">==</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>  <span class="fu">select</span>(Variables, Rescaled.RelWeight, Raw.RelWeight.CI.Lower, Raw.RelWeight.CI.Upper)</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt;   Variables Rescaled.RelWeight Raw.RelWeight.CI.Lower Raw.RelWeight.CI.Upper</span></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="co">#&gt; 1      disp           36.37966              0.2019181              0.3411714</span></span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a><span class="co">#&gt; 2       cyl           35.46279              0.2175689              0.3301762</span></span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a><span class="co">#&gt; 3        hp           28.15755              0.1566494              0.2638215</span></span></code></pre></div>
+<p>For comprehensive coverage of bootstrap methods, advanced features,
+and best practices, consult the bootstrap vignette.</p>
+</div>
+</div>
+<div id="real-world-example-diamond-price-analysis" class="section level2">
+<h2>Real-World Example: Diamond Price Analysis</h2>
+<p>Let’s explore a more complex example using the <code>diamonds</code>
+dataset:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Analyze diamond price drivers</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>diamonds_subset <span class="ot">&lt;-</span> diamonds <span class="sc">%&gt;%</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="fu">select</span>(price, carat, depth, table, x, y, z) <span class="sc">%&gt;%</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="fu">sample_n</span>(<span class="dv">1000</span>)  <span class="co"># Sample for faster computation</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>diamond_rwa <span class="ot">&lt;-</span> diamonds_subset <span class="sc">%&gt;%</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>  <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;price&quot;</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>      <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;carat&quot;</span>, <span class="st">&quot;depth&quot;</span>, <span class="st">&quot;table&quot;</span>, <span class="st">&quot;x&quot;</span>, <span class="st">&quot;y&quot;</span>, <span class="st">&quot;z&quot;</span>),</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>      <span class="at">applysigns =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>diamond_rwa<span class="sc">$</span>result</span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Sign.Rescaled.RelWeight</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt; 1     carat   0.253554640         28.9515921    +              28.9515921</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt; 2         y   0.206371378         23.5640727    +              23.5640727</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">#&gt; 3         z   0.204433608         23.3428125    +              23.3428125</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co">#&gt; 4         x   0.204002285         23.2935629    +              23.2935629</span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="co">#&gt; 5     table   0.004842128          0.5528879    +               0.5528879</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="co">#&gt; 6     depth   0.002584205          0.2950719    -              -0.2950719</span></span></code></pre></div>
+<p>For bootstrap analysis of this example with confidence intervals,
+see:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">vignette</span>(<span class="st">&quot;bootstrap-confidence-intervals&quot;</span>, <span class="at">package =</span> <span class="st">&quot;rwa&quot;</span>)</span></code></pre></div>
+</div>
+<div id="comparison-with-traditional-regression" class="section level2">
+<h2>Comparison with Traditional Regression</h2>
+<p>Let’s compare RWA results with traditional multiple regression to
+highlight the differences:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Traditional regression</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>lm_model <span class="ot">&lt;-</span> <span class="fu">lm</span>(mpg <span class="sc">~</span> cyl <span class="sc">+</span> disp <span class="sc">+</span> hp <span class="sc">+</span> gear, <span class="at">data =</span> mtcars)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>lm_summary <span class="ot">&lt;-</span> <span class="fu">summary</span>(lm_model)</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co"># Display regression summary</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="fu">print</span>(lm_summary)</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt; lm(formula = mpg ~ cyl + disp + hp + gear, data = mtcars)</span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co">#&gt; Residuals:</span></span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a><span class="co">#&gt; -4.3716 -2.3319 -0.8279  1.3156  7.0782 </span></span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a><span class="co">#&gt; Coefficients:</span></span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a><span class="co">#&gt; (Intercept) 27.42342    6.30108   4.352 0.000173 ***</span></span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a><span class="co">#&gt; cyl         -0.86624    0.84941  -1.020 0.316869    </span></span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a><span class="co">#&gt; disp        -0.01190    0.01190  -1.000 0.325996    </span></span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a><span class="co">#&gt; hp          -0.03050    0.01982  -1.539 0.135498    </span></span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a><span class="co">#&gt; gear         1.42306    1.21053   1.176 0.250030    </span></span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a><span class="co">#&gt; ---</span></span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a><span class="co">#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</span></span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a><span class="co">#&gt; Residual standard error: 3.035 on 27 degrees of freedom</span></span>
+<span id="cb14-26"><a href="#cb14-26" tabindex="-1"></a><span class="co">#&gt; Multiple R-squared:  0.7792, Adjusted R-squared:  0.7465 </span></span>
+<span id="cb14-27"><a href="#cb14-27" tabindex="-1"></a><span class="co">#&gt; F-statistic: 23.82 on 4 and 27 DF,  p-value: 1.606e-08</span></span>
+<span id="cb14-28"><a href="#cb14-28" tabindex="-1"></a></span>
+<span id="cb14-29"><a href="#cb14-29" tabindex="-1"></a><span class="co"># RWA results</span></span>
+<span id="cb14-30"><a href="#cb14-30" tabindex="-1"></a>rwa_model <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb14-31"><a href="#cb14-31" tabindex="-1"></a>  <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>, <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;gear&quot;</span>))</span>
+<span id="cb14-32"><a href="#cb14-32" tabindex="-1"></a></span>
+<span id="cb14-33"><a href="#cb14-33" tabindex="-1"></a><span class="co"># Compare importance rankings</span></span>
+<span id="cb14-34"><a href="#cb14-34" tabindex="-1"></a>comparison <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb14-35"><a href="#cb14-35" tabindex="-1"></a>  <span class="at">Variable =</span> rwa_model<span class="sc">$</span>predictors,</span>
+<span id="cb14-36"><a href="#cb14-36" tabindex="-1"></a>  <span class="at">RWA_Rescaled =</span> rwa_model<span class="sc">$</span>result<span class="sc">$</span>Rescaled.RelWeight,</span>
+<span id="cb14-37"><a href="#cb14-37" tabindex="-1"></a>  <span class="at">RWA_Rank =</span> <span class="fu">rank</span>(<span class="sc">-</span>rwa_model<span class="sc">$</span>result<span class="sc">$</span>Rescaled.RelWeight)</span>
+<span id="cb14-38"><a href="#cb14-38" tabindex="-1"></a>)</span>
+<span id="cb14-39"><a href="#cb14-39" tabindex="-1"></a></span>
+<span id="cb14-40"><a href="#cb14-40" tabindex="-1"></a><span class="fu">print</span>(comparison)</span>
+<span id="cb14-41"><a href="#cb14-41" tabindex="-1"></a><span class="co">#&gt;   Variable RWA_Rescaled RWA_Rank</span></span>
+<span id="cb14-42"><a href="#cb14-42" tabindex="-1"></a><span class="co">#&gt; 1      cyl     29.79691        1</span></span>
+<span id="cb14-43"><a href="#cb14-43" tabindex="-1"></a><span class="co">#&gt; 2     disp     29.32274        2</span></span>
+<span id="cb14-44"><a href="#cb14-44" tabindex="-1"></a><span class="co">#&gt; 3       hp     28.50999        3</span></span>
+<span id="cb14-45"><a href="#cb14-45" tabindex="-1"></a><span class="co">#&gt; 4     gear     12.37037        4</span></span></code></pre></div>
+<div id="methodological-advantages-of-rwa" class="section level3">
+<h3>Methodological Advantages of RWA</h3>
+<div id="superior-to-standard-regression-under-multicollinearity" class="section level4">
+<h4>1. Superior to Standard Regression Under Multicollinearity</h4>
+<p>Traditional standardized beta coefficients reflect <strong>unique
+contribution holding others constant</strong>, which severely
+underestimates variables that share variance with others. RWA gives
+credit to predictors for variance they share with the outcome
+<strong>both individually and jointly</strong> with other variables.</p>
+</div>
+<div id="avoids-stepwise-selection-problems" class="section level4">
+<h4>2. Avoids Stepwise Selection Problems</h4>
+<p>Stepwise methods arbitrarily pick one variable from a collinear set
+and drop others, potentially leading to incorrect conclusions about
+importance. Unlike stepwise selection, <strong>RWA does not throw away
+information</strong> – it shows how much each predictor contributes
+given the complete set.</p>
+</div>
+<div id="more-interpretable-than-principal-components" class="section level4">
+<h4>3. More Interpretable than Principal Components</h4>
+<p>While PCA addresses multicollinearity, it <strong>buries the identity
+of individual predictors</strong> in composite factors. RWA uses
+orthogonalization behind the scenes but <strong>returns results in terms
+of original predictors</strong>, maintaining interpretability.</p>
+</div>
+<div id="computational-efficiency-vs.-dominance-analysis" class="section level4">
+<h4>4. Computational Efficiency vs. Dominance Analysis</h4>
+<p>RWA’s greatest achievement is producing <strong>almost identical
+results to dominance analysis but far more efficiently</strong>.
+Research shows:</p>
+<ul>
+<li><strong>Correlation &gt; 0.99</strong> between RWA and dominance
+analysis rankings</li>
+<li><strong>Exponential time savings</strong>: dominance analysis
+requires 2^p models; RWA solves equations directly</li>
+<li><strong>Enhanced capabilities</strong>: easier to provide confidence
+intervals and significance tests</li>
+</ul>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># Demonstrate computational considerations</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>predictors <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;gear&quot;</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>n_predictors <span class="ot">&lt;-</span> <span class="fu">length</span>(predictors)</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Number of predictors:&quot;</span>, n_predictors, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="co">#&gt; Number of predictors: 4</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Dominance analysis would require&quot;</span>, <span class="dv">2</span><span class="sc">^</span>n_predictors, <span class="st">&quot;subset models</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt; Dominance analysis would require 16 subset models</span></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;RWA solves this in a single matrix operation</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt; RWA solves this in a single matrix operation</span></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a></span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a><span class="co"># Show RWA speed (for demonstration)</span></span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a>start_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a>rwa_speed_test <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span> <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>, <span class="at">predictors =</span> predictors)</span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a>end_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;RWA computation time:&quot;</span>, <span class="fu">round</span>(<span class="fu">as.numeric</span>(end_time <span class="sc">-</span> start_time, <span class="at">units =</span> <span class="st">&quot;secs&quot;</span>), <span class="dv">4</span>), <span class="st">&quot;seconds</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a><span class="co">#&gt; RWA computation time: 0.021 seconds</span></span></code></pre></div>
+</div>
+</div>
+</div>
+<div id="critical-limitations-and-when-to-exercise-caution" class="section level2">
+<h2>Critical Limitations and When to Exercise Caution</h2>
+<div id="not-a-replacement-for-theory" class="section level3">
+<h3>1. Not a Replacement for Theory</h3>
+<p><strong>RWA is fundamentally a descriptive, variance-partitioning
+tool.</strong> It tells us “how much prediction was attributable to X”
+but <strong>does not imply causation</strong>. As Tonidandel &amp;
+LeBreton emphasize: relative weights <strong>“are not causal indicators
+and thus do not necessarily dictate a course of action.”</strong></p>
+<p>RWA should enhance interpretation of regression models but decisions
+must still be guided by substantive theory.</p>
+</div>
+<div id="the-redundancy-problem" class="section level3">
+<h3>2. The Redundancy Problem</h3>
+<p><strong>RWA is not a magic bullet for extreme multicollinearity
+stemming from redundant predictors.</strong> When predictors measure
+essentially the same construct, RWA will split the contribution between
+them, potentially making each appear less important individually.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># Demonstrate the redundancy limitation</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">456</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>x1_orig <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">100</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>x1_dup <span class="ot">&lt;-</span> x1_orig <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="dv">100</span>, <span class="at">sd =</span> <span class="fl">0.05</span>)  <span class="co"># Nearly identical (r ≈ 0.99)</span></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>y_simple <span class="ot">&lt;-</span> <span class="fl">0.8</span> <span class="sc">*</span> x1_orig <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="dv">100</span>, <span class="at">sd =</span> <span class="fl">0.5</span>)</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>redundant_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">y =</span> y_simple, <span class="at">x1_original =</span> x1_orig, </span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>                           <span class="at">x1_duplicate =</span> x1_dup)</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a></span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Correlation between &#39;different&#39; predictors:&quot;</span>, <span class="fu">cor</span>(x1_orig, x1_dup), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a><span class="co">#&gt; Correlation between &#39;different&#39; predictors: 0.9988244</span></span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a></span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a><span class="co"># RWA correctly splits redundant variance</span></span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a>redundant_rwa <span class="ot">&lt;-</span> <span class="fu">rwa</span>(redundant_data, <span class="st">&quot;y&quot;</span>, <span class="fu">c</span>(<span class="st">&quot;x1_original&quot;</span>, <span class="st">&quot;x1_duplicate&quot;</span>))</span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a><span class="fu">print</span>(<span class="st">&quot;RWA with redundant predictors:&quot;</span>)</span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a><span class="co">#&gt; [1] &quot;RWA with redundant predictors:&quot;</span></span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a><span class="fu">print</span>(redundant_rwa<span class="sc">$</span>result)</span>
+<span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a><span class="co">#&gt;      Variables Raw.RelWeight Rescaled.RelWeight Sign</span></span>
+<span id="cb16-19"><a href="#cb16-19" tabindex="-1"></a><span class="co">#&gt; 1  x1_original     0.3841750           50.05342    +</span></span>
+<span id="cb16-20"><a href="#cb16-20" tabindex="-1"></a><span class="co">#&gt; 2 x1_duplicate     0.3833551           49.94658    +</span></span>
+<span id="cb16-21"><a href="#cb16-21" tabindex="-1"></a></span>
+<span id="cb16-22"><a href="#cb16-22" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Each variable appears less important individually,&quot;</span>)</span>
+<span id="cb16-23"><a href="#cb16-23" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-24"><a href="#cb16-24" tabindex="-1"></a><span class="co">#&gt; Each variable appears less important individually,</span></span>
+<span id="cb16-25"><a href="#cb16-25" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">but together they account for most variance.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb16-26"><a href="#cb16-26" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-27"><a href="#cb16-27" tabindex="-1"></a><span class="co">#&gt; but together they account for most variance.</span></span>
+<span id="cb16-28"><a href="#cb16-28" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Combined contribution:&quot;</span>, </span>
+<span id="cb16-29"><a href="#cb16-29" tabindex="-1"></a>    <span class="fu">sum</span>(redundant_rwa<span class="sc">$</span>result<span class="sc">$</span>Raw.RelWeight), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb16-30"><a href="#cb16-30" tabindex="-1"></a><span class="co">#&gt; Combined contribution: 0.7675301</span></span></code></pre></div>
+<p>This is <strong>statistically appropriate</strong> – it reflects that
+one variable alone could do the job of both. Users must recognize that
+<strong>the pair as a whole may be very important even if each alone has
+a modest weight.</strong></p>
+</div>
+<div id="sample-size-and-stability" class="section level3">
+<h3>3. Sample Size and Stability</h3>
+<p>RWA shares multiple regression’s sensitivity to <strong>sample size
+and predictor-to-observation ratios.</strong> Bootstrap confidence
+intervals help quantify uncertainty, but “bootstrapping will not
+overcome the inherent limitations associated with a small sample
+size.”</p>
+</div>
+</div>
+<div id="best-practices-and-recommendations" class="section level2">
+<h2>Best Practices and Recommendations</h2>
+<div id="sample-size-considerations" class="section level3">
+<h3>1. Sample Size Considerations</h3>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co"># Check your sample size</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>n_obs <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span> </span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="fu">select</span>(mpg, cyl, disp, hp, gear) <span class="sc">%&gt;%</span> </span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  <span class="fu">na.omit</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>  <span class="fu">nrow</span>()</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Sample size:&quot;</span>, n_obs)</span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a><span class="co">#&gt; Sample size: 32</span></span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Rule of thumb: At least 5-10 observations per predictor&quot;</span>)</span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a><span class="co">#&gt; Rule of thumb: At least 5-10 observations per predictor</span></span></code></pre></div>
+</div>
+<div id="variable-selection-and-model-specification" class="section level3">
+<h3>2. Variable Selection and Model Specification</h3>
+<p>RWA works best with: - <strong>Continuous variables</strong> (though
+categorical can be used with caution) - <strong>Theoretically meaningful
+predictors</strong><br />
+- <strong>Reasonable predictor-to-observation ratios</strong> -
+<strong>Predictors that are distinct but may be correlated</strong></p>
+</div>
+<div id="when-to-use-rwa-vs.-alternatives" class="section level3">
+<h3>3. When to Use RWA vs. Alternatives</h3>
+<p><strong>Use RWA when:</strong> 1. <strong>Predictors are
+theoretically distinct but empirically correlated</strong> 2.
+<strong>Understanding relative contribution (not just prediction) is the
+goal</strong> 3. <strong>Sample size supports stable multiple
+regression</strong> 4. <strong>Linear relationships are reasonable
+assumptions</strong></p>
+<p><strong>Consider alternatives when:</strong> 1. <strong>Predictors
+are essentially redundant measures</strong> 2. <strong>Sample size is
+very small relative to predictors</strong> 3. <strong>Primary goal is
+variable selection rather than interpretation</strong> 4.
+<strong>Non-linear effects are suspected</strong></p>
+</div>
+<div id="reporting-results" class="section level3">
+<h3>4. Reporting Results</h3>
+<p>When reporting RWA results, include: - <strong>Sample size</strong>
+and missing data handling - <strong>Raw and rescaled weights</strong> -
+<strong>Model R-squared</strong> - <strong>Confidence intervals</strong>
+for key predictors (when using bootstrap)</p>
+<p>For bootstrap confidence intervals and advanced statistical
+considerations, see:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">vignette</span>(<span class="st">&quot;bootstrap-confidence-intervals&quot;</span>, <span class="at">package =</span> <span class="st">&quot;rwa&quot;</span>)</span></code></pre></div>
+</div>
+</div>
+<div id="troubleshooting-common-issues" class="section level2">
+<h2>Troubleshooting Common Issues</h2>
+<div id="multicollinearity-warnings" class="section level3">
+<h3>Multicollinearity Warnings</h3>
+<p>If you encounter extreme multicollinearity:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="co"># Check correlation matrix</span></span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>cor_matrix <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>  <span class="fu">select</span>(cyl, disp, hp, gear) <span class="sc">%&gt;%</span></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>  <span class="fu">cor</span>()</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a><span class="co"># Look for high correlations (&gt;0.9)</span></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>high_cor <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">abs</span>(cor_matrix) <span class="sc">&gt;</span> <span class="fl">0.9</span> <span class="sc">&amp;</span> cor_matrix <span class="sc">!=</span> <span class="dv">1</span>, <span class="at">arr.ind =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">nrow</span>(high_cor) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;High correlations detected between variables&quot;</span>)</span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>}</span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a><span class="co">#&gt; High correlations detected between variables</span></span></code></pre></div>
+</div>
+<div id="missing-data" class="section level3">
+<h3>Missing Data</h3>
+<p>RWA handles missing data through listwise deletion:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="co"># Check for missing data patterns</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>missing_summary <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  <span class="fu">select</span>(mpg, cyl, disp, hp, gear) <span class="sc">%&gt;%</span></span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>  <span class="fu">summarise_all</span>(<span class="sc">~</span><span class="fu">sum</span>(<span class="fu">is.na</span>(.)))</span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a><span class="fu">print</span>(missing_summary)</span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a><span class="co">#&gt;   mpg cyl disp hp gear</span></span>
+<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a><span class="co">#&gt; 1   0   0    0  0    0</span></span></code></pre></div>
+</div>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<p>This package and methodology are based on the following key
+references:</p>
+<p><strong>Primary Sources:</strong></p>
+<ul>
+<li><p><strong>Johnson, J. W. (2000)</strong>. A heuristic method for
+estimating the relative weight of predictor variables in multiple
+regression. <em>Multivariate Behavioral Research</em>, 35(1), 1-19. DOI:
+10.1207/S15327906MBR3501_1</p></li>
+<li><p><strong>Tonidandel, S., &amp; LeBreton, J. M. (2015)</strong>.
+RWA Web: A free, comprehensive, web-based, and user-friendly tool for
+relative weight analyses. <em>Journal of Business and Psychology</em>,
+30(2), 207-216. DOI: 10.1007/s10869-014-9351-z</p></li>
+</ul>
+<p><strong>Additional Reading:</strong></p>
+<ul>
+<li><p>Azen, R., &amp; Budescu, D. V. (2003). The dominance analysis
+approach for comparing predictors in multiple regression.
+<em>Psychological Methods</em>, 8(2), 129-148.</p></li>
+<li><p>Grömping, U. (2006). Relative importance for linear regression in
+R: The package relaimpo. <em>Journal of Statistical Software</em>,
+17(1), 1-27.</p></li>
+<li><p>Johnson, J. W., &amp; LeBreton, J. M. (2004). History and use of
+relative importance indices in organizational research.
+<em>Organizational Research Methods</em>, 7(3), 238-257.</p></li>
+</ul>
+<p>For bootstrap methods and statistical significance testing, see the
+dedicated bootstrap vignette and its references.</p>
+<p>For the latest methodological developments: <a href="https://www.scotttonidandel.com/rwa-web/" class="uri">https://www.scotttonidandel.com/rwa-web/</a></p>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>The <code>rwa</code> package provides a user-friendly implementation
+of Relative Weights Analysis in R with seamless tidyverse integration.
+This vignette covered both practical implementation and theoretical
+foundations.</p>
+<div id="key-takeaways" class="section level3">
+<h3>Key Takeaways</h3>
+<p><strong>Methodological Strengths:</strong></p>
+<ul>
+<li><strong>Handles multicollinearity effectively</strong> by
+partitioning shared variance appropriately</li>
+<li><strong>Provides interpretable results</strong> as percentages of
+explained variance<br />
+</li>
+<li><strong>Computationally efficient</strong> compared to dominance
+analysis</li>
+<li><strong>Statistically robust</strong> with bootstrap confidence
+intervals</li>
+</ul>
+<p><strong>Important Limitations:</strong></p>
+<ul>
+<li><strong>Not a replacement for theory</strong> - results are
+descriptive, not causal</li>
+<li><strong>Redundant predictors</strong> will split variance,
+potentially appearing less important individually</li>
+<li><strong>Sample size matters</strong> - adequate observations needed
+for stable estimates</li>
+<li><strong>Linear model assumptions</strong> apply</li>
+</ul>
+</div>
+<div id="when-to-use-rwa-1" class="section level3">
+<h3>When to Use RWA</h3>
+<p>RWA is particularly valuable for:</p>
+<ul>
+<li><strong>Key drivers analysis</strong> in market research and
+business analytics<br />
+</li>
+<li><strong>Multicollinear predictors</strong> in scientific
+research</li>
+<li><strong>Situations requiring interpretable importance
+measures</strong></li>
+<li><strong>Linear models where traditional regression coefficients are
+misleading</strong></li>
+</ul>
+</div>
+<div id="the-bottom-line" class="section level3">
+<h3>The Bottom Line</h3>
+<p>RWA provides <strong>clear, quantifiable answers to questions about
+predictor importance in a multicollinear world</strong> – answers that
+are often obscured when using standard regression approaches. With
+proper understanding of its assumptions and limitations, RWA remains an
+essential tool for researchers and practitioners dealing with correlated
+predictors.</p>
+<p>Whether you’re conducting key drivers analysis in market research,
+exploring variable importance in predictive modeling, or addressing
+multicollinearity in academic research, RWA provides valuable insights
+that complement traditional regression approaches.</p>
+<p>For advanced bootstrap methods and statistical significance testing,
+see:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="fu">vignette</span>(<span class="st">&quot;bootstrap-confidence-intervals&quot;</span>, <span class="at">package =</span> <span class="st">&quot;rwa&quot;</span>)</span></code></pre></div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
