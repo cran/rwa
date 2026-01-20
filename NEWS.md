@@ -1,3 +1,21 @@
+# rwa 0.1.1
+
+## Improvements
+
+- **Input validation**: Added comprehensive validation for `rwa()` parameters including `conf_level`, `n_bootstrap`, non-numeric variables, zero-variance variables, and singular correlation matrices with informative error messages
+- **Code refactoring**: Consolidated duplicate RWA calculation code in bootstrap functions into a single internal helper
+- **Documentation**: Added links to pkgdown site in README; fixed internal function documentation
+
+## Bug Fixes
+
+- Fixed flaky bootstrap test by using a fixed random seed for reproducibility (#20)
+
+## Tests
+
+- Added extensive tests for input validation and edge cases (collinearity, small samples, invalid parameters)
+
+---
+
 # rwa 0.1.0
 
 ## New Features
