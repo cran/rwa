@@ -1,7 +1,7 @@
 Package: rwa
 Type: Package
 Title: Perform a Relative Weights Analysis
-Version: 0.1.1
+Version: 1.0.0
 Authors@R: person(given = "Martin",
                   family = "Chan",
                   role = c("aut", "cre"),
@@ -15,15 +15,16 @@ License: GPL-3
 Encoding: UTF-8
 URL: https://martinctc.github.io/rwa/, https://github.com/martinctc/rwa
 BugReports: https://github.com/martinctc/rwa/issues
-RoxygenNote: 7.3.2
+Depends: R (>= 4.1.0)
 Imports: dplyr, magrittr, stats, tidyr, ggplot2, boot, purrr, utils
 Suggests: knitr, rmarkdown, testthat (>= 3.0.0), rlang, spelling
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Language: en-US
+Config/roxygen2/version: 8.0.0
 NeedsCompilation: no
-Packaged: 2026-01-20 16:34:30 UTC; martinchan
+Packaged: 2026-09-16 17:33:40 UTC; martinchan
 Author: Martin Chan [aut, cre]
 Maintainer: Martin Chan <martinchan53@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-01-20 17:10:07 UTC
+Date/Publication: 2026-09-16 18:00:02 UTC

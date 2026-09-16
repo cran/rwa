@@ -122,7 +122,6 @@ print(head(ci_data))
 # Assess precision
 ci_analysis <- ci_data %>%
   mutate(
-    significant = ci_lower > 0 | ci_upper < 0,
     ci_width = ci_upper - ci_lower,
     precision = case_when(
       ci_width < 0.05 ~ "High precision",

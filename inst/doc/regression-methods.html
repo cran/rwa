@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Martin Chan" />
+
+<meta name="date" content="2026-09-16" />
+
+<title>Regression Methods: Multiple and Logistic RWA</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Regression Methods: Multiple and Logistic
+RWA</h1>
+<h4 class="author">Martin Chan</h4>
+<h4 class="date">2026-09-16</h4>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(rwa)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>The <code>rwa</code> package provides two specialized functions for
+conducting Relative Weights Analysis depending on the nature of your
+outcome variable:</p>
+<ul>
+<li><strong><code>rwa_multiregress()</code></strong>: For continuous
+outcome variables (standard multiple regression)</li>
+<li><strong><code>rwa_logit()</code></strong>: For binary outcome
+variables (logistic regression)</li>
+</ul>
+<p>The main <code>rwa()</code> function acts as a convenient wrapper
+that can automatically detect which method to use, but understanding
+these underlying functions gives you more control and insight into your
+analysis.</p>
+</div>
+<div id="when-to-use-each-method" class="section level2">
+<h2>When to Use Each Method</h2>
+<table>
+<colgroup>
+<col width="32%" />
+<col width="23%" />
+<col width="44%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Outcome Type</th>
+<th>Function</th>
+<th>Example Use Cases</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Continuous</td>
+<td><code>rwa_multiregress()</code></td>
+<td>Predicting prices, scores, measurements</td>
+</tr>
+<tr class="even">
+<td>Binary (0/1)</td>
+<td><code>rwa_logit()</code></td>
+<td>Predicting yes/no, pass/fail, purchase/no purchase</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="multiple-regression-with-rwa_multiregress" class="section level2">
+<h2>Multiple Regression with <code>rwa_multiregress()</code></h2>
+<div id="basic-example-with-mtcars" class="section level3">
+<h3>Basic Example with mtcars</h3>
+<p>The <code>mtcars</code> dataset contains continuous variables ideal
+for demonstrating multiple regression RWA. Let’s examine what factors
+most influence fuel efficiency (mpg):</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Direct use of rwa_multiregress()</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>result_multi <span class="ot">&lt;-</span> <span class="fu">rwa_multiregress</span>(</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">df =</span> mtcars,</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co"># View results</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>result_multi<span class="sc">$</span>result</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt; 1       cyl     0.2096904           24.70914    -</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt; 2      disp     0.1883043           22.18908    -</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; 3        hp     0.1799590           21.20570    -</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; 4        wt     0.2706812           31.89607    -</span></span></code></pre></div>
+</div>
+<div id="interpreting-multiple-regression-results" class="section level3">
+<h3>Interpreting Multiple Regression Results</h3>
+<p>The output contains several key pieces of information:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># R-squared: Total variance explained</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;R-squared:&quot;</span>, <span class="fu">round</span>(result_multi<span class="sc">$</span>rsquare, <span class="dv">4</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; R-squared: 0.8486</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;This means&quot;</span>, <span class="fu">round</span>(result_multi<span class="sc">$</span>rsquare <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>), </span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>    <span class="st">&quot;% of variance in mpg is explained by these predictors.</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; This means 84.9 % of variance in mpg is explained by these predictors.</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co"># Number of observations</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Sample size:&quot;</span>, result_multi<span class="sc">$</span>n, <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; Sample size: 32</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co"># Relative importance breakdown</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Relative Importance (Rescaled Weights sum to 100%):</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt; Relative Importance (Rescaled Weights sum to 100%):</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>result_multi<span class="sc">$</span>result <span class="sc">%&gt;%</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(Rescaled.RelWeight)) <span class="sc">%&gt;%</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Rescaled.RelWeight =</span> <span class="fu">round</span>(Rescaled.RelWeight, <span class="dv">2</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>  <span class="fu">select</span>(Variables, Rescaled.RelWeight)</span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt;   Variables Rescaled.RelWeight</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt; 1        wt              31.90</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; 2       cyl              24.71</span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; 3      disp              22.19</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; 4        hp              21.21</span></span></code></pre></div>
+<p>The <strong>Rescaled.RelWeight</strong> column shows the percentage
+of explainable variance attributed to each predictor. In this example,
+we can see that weight (<code>wt</code>) is the most important predictor
+of fuel efficiency, followed by displacement (<code>disp</code>).</p>
+</div>
+<div id="using-the-applysigns-parameter" class="section level3">
+<h3>Using the <code>applysigns</code> Parameter</h3>
+<p>By default, relative weights are always positive (they represent
+variance contributions). Use <code>applysigns = TRUE</code> to see the
+direction of each relationship:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># With sign information</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>result_signed <span class="ot">&lt;-</span> <span class="fu">rwa_multiregress</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">df =</span> mtcars,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>),</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">applysigns =</span> <span class="cn">TRUE</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>result_signed<span class="sc">$</span>result <span class="sc">%&gt;%</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>  <span class="fu">select</span>(Variables, Raw.RelWeight, Sign.Rescaled.RelWeight, Sign)</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Sign.Rescaled.RelWeight Sign</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; 1       cyl     0.2096904               -24.70914    -</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; 2      disp     0.1883043               -22.18908    -</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; 3        hp     0.1799590               -21.20570    -</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; 4        wt     0.2706812               -31.89607    -</span></span></code></pre></div>
+<p>The <code>Sign</code> column indicates whether each predictor has a
+positive (+) or negative (-) relationship with the outcome. Negative
+signs for <code>cyl</code>, <code>disp</code>, <code>hp</code>, and
+<code>wt</code> make intuitive sense: more cylinders, larger
+displacement, more horsepower, and heavier weight all tend to decrease
+fuel efficiency.</p>
+</div>
+<div id="examining-correlation-structures" class="section level3">
+<h3>Examining Correlation Structures</h3>
+<p>The function also returns the correlation matrices, which can help
+understand relationships between predictors:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Correlation between predictors</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Predictor Correlation Matrix (RXX):</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; Predictor Correlation Matrix (RXX):</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="fu">round</span>(result_multi<span class="sc">$</span>RXX, <span class="dv">3</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt;        cyl  disp    hp    wt</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; cyl  1.000 0.902 0.832 0.782</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; disp 0.902 1.000 0.791 0.888</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; hp   0.832 0.791 1.000 0.659</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; wt   0.782 0.888 0.659 1.000</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co"># Correlation of predictors with outcome</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Predictor-Outcome Correlations (RXY):</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; Predictor-Outcome Correlations (RXY):</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="fu">round</span>(result_multi<span class="sc">$</span>RXY, <span class="dv">3</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt;    cyl   disp     hp     wt </span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; -0.852 -0.848 -0.776 -0.868</span></span></code></pre></div>
+</div>
+</div>
+<div id="logistic-regression-with-rwa_logit" class="section level2">
+<h2>Logistic Regression with <code>rwa_logit()</code></h2>
+<div id="creating-a-binary-outcome" class="section level3">
+<h3>Creating a Binary Outcome</h3>
+<p>For logistic regression, we need a binary outcome variable. Let’s
+create one from the <code>mtcars</code> dataset:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Create binary outcome: high efficiency (1) vs low efficiency (0)</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>mtcars_binary <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">high_mpg =</span> <span class="fu">ifelse</span>(mpg <span class="sc">&gt;</span> <span class="fu">median</span>(mpg), <span class="dv">1</span>, <span class="dv">0</span>))</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co"># Check distribution</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="fu">table</span>(mtcars_binary<span class="sc">$</span>high_mpg)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt;  0  1 </span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; 17 15</span></span></code></pre></div>
+</div>
+<div id="basic-logistic-rwa" class="section level3">
+<h3>Basic Logistic RWA</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Logistic regression RWA</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>result_logit <span class="ot">&lt;-</span> <span class="fu">rwa_logit</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">df =</span> mtcars_binary,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;high_mpg&quot;</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>)</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co"># View results</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>result_logit<span class="sc">$</span>result</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; 1       cyl      7.296847           22.22380    -</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt; 2      disp      7.343709           22.36653    -</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt; 3        hp      4.937049           15.03663    -</span></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co">#&gt; 4        wt     13.255876           40.37304    -</span></span></code></pre></div>
+</div>
+<div id="interpreting-logistic-rwa-results" class="section level3">
+<h3>Interpreting Logistic RWA Results</h3>
+<p>The interpretation differs slightly from multiple regression:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Lambda (analogous to R-squared for logistic regression)</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Lambda (pseudo R-squared):&quot;</span>, <span class="fu">round</span>(result_logit<span class="sc">$</span>lambda, <span class="dv">4</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; Lambda (pseudo R-squared): 0.7481 0.4305 0.3884 0.3227 0.4305 0.7102 0.3386 0.4423 0.3884 0.3386 0.8239 0.2358 0.3227 0.4423 0.2358 0.8029</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Sample size:&quot;</span>, result_logit<span class="sc">$</span>n, <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt; Sample size: 32</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co"># Relative importance</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Relative Importance for Predicting High Fuel Efficiency:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; Relative Importance for Predicting High Fuel Efficiency:</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>result_logit<span class="sc">$</span>result <span class="sc">%&gt;%</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(Rescaled.RelWeight)) <span class="sc">%&gt;%</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Rescaled.RelWeight =</span> <span class="fu">round</span>(Rescaled.RelWeight, <span class="dv">2</span>))</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt; 1        wt     13.255876              40.37    -</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; 2      disp      7.343709              22.37    -</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt; 3       cyl      7.296847              22.22    -</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="co">#&gt; 4        hp      4.937049              15.04    -</span></span></code></pre></div>
+<p>Like multiple regression, the <strong>Rescaled.RelWeight</strong>
+values sum to 100%, representing the percentage of predictable variance
+attributed to each predictor.</p>
+</div>
+<div id="logistic-rwa-with-signs" class="section level3">
+<h3>Logistic RWA with Signs</h3>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># With direction information</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>result_logit_signed <span class="ot">&lt;-</span> <span class="fu">rwa_logit</span>(</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">df =</span> mtcars_binary,</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;high_mpg&quot;</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>),</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="at">applysigns =</span> <span class="cn">TRUE</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>)</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>result_logit_signed<span class="sc">$</span>result <span class="sc">%&gt;%</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="fu">select</span>(Variables, Rescaled.RelWeight, Sign)</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt;   Variables Rescaled.RelWeight Sign</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="co">#&gt; 1       cyl           22.22380    -</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="co">#&gt; 2      disp           22.36653    -</span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="co">#&gt; 3        hp           15.03663    -</span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a><span class="co">#&gt; 4        wt           40.37304    -</span></span></code></pre></div>
+</div>
+</div>
+<div id="using-the-rwa-wrapper-function" class="section level2">
+<h2>Using the <code>rwa()</code> Wrapper Function</h2>
+<p>The main <code>rwa()</code> function provides a convenient interface
+that can automatically detect whether to use multiple or logistic
+regression based on your outcome variable.</p>
+<div id="auto-detection-of-binary-outcomes" class="section level3">
+<h3>Auto-Detection of Binary Outcomes</h3>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># For continuous outcome - automatically uses multiple regression</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>result_auto_multi <span class="ot">&lt;-</span> <span class="fu">rwa</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">df =</span> mtcars,</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>)</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co"># For binary outcome - automatically uses logistic regression</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>result_auto_logit <span class="ot">&lt;-</span> <span class="fu">rwa</span>(</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  <span class="at">df =</span> mtcars_binary,</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;high_mpg&quot;</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>  <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>)</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="explicit-method-selection" class="section level3">
+<h3>Explicit Method Selection</h3>
+<p>You can also explicitly specify the method using the
+<code>method</code> parameter:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Force multiple regression</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>result_explicit_multi <span class="ot">&lt;-</span> <span class="fu">rwa</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">df =</span> mtcars,</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>),</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;multiple&quot;</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>)</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co"># Force logistic regression (requires binary outcome)</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>result_explicit_logit <span class="ot">&lt;-</span> <span class="fu">rwa</span>(</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>  <span class="at">df =</span> mtcars_binary,</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;high_mpg&quot;</span>,</span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>  <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>),</span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;logistic&quot;</span></span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="additional-features-in-rwa" class="section level3">
+<h3>Additional Features in <code>rwa()</code></h3>
+<p>The wrapper function also provides sorting and visualization
+options:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Sort results by importance</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>result_sorted <span class="ot">&lt;-</span> <span class="fu">rwa</span>(</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">df =</span> mtcars,</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>  <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>),</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>  <span class="at">sort =</span> <span class="cn">TRUE</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>)</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>result_sorted<span class="sc">$</span>result</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt; 1        wt     0.2706812           31.89607    -</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2096904           24.70914    -</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt; 3      disp     0.1883043           22.18908    -</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt; 4        hp     0.1799590           21.20570    -</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co"># Visualize with plot_rwa()</span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="fu">plot_rwa</span>(result_sorted)</span></code></pre></div>
+<p><img role="img" aria-label src="data:image/png;base64,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" alt width="100%" /></p>
+<p>The <code>use</code> and <code>weight</code> arguments apply to
+<strong>multiple regression only</strong>. Neither affects a logistic
+fit. <code>rwa()</code> warns when you supply a weight column or a
+non-default <code>use</code> value alongside logistic RWA, and ignores
+them, because <code>rwa_logit()</code> does not fit a weighted or
+correlation-based model:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Weighted RWA: multiple regression only</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">rwa</span>(df, <span class="st">&quot;satisfaction&quot;</span>, <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>, <span class="st">&quot;x2&quot;</span>), <span class="at">weight =</span> <span class="st">&quot;survey_weight&quot;</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co"># Warns, and the weight is not applied</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="fu">rwa</span>(df, <span class="st">&quot;binary_outcome&quot;</span>, <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>, <span class="st">&quot;x2&quot;</span>), <span class="at">weight =</span> <span class="st">&quot;survey_weight&quot;</span>)</span></code></pre></div>
+<p>See <code>vignette(&quot;weighted-missing-data&quot;, package = &quot;rwa&quot;)</code>
+for weighted estimation and the missing-data contract.</p>
+</div>
+</div>
+<div id="real-world-example-iris-dataset" class="section level2">
+<h2>Real-World Example: Iris Dataset</h2>
+<p>Let’s apply these methods to the classic <code>iris</code>
+dataset.</p>
+<div id="multiple-regression-predicting-petal-length" class="section level3">
+<h3>Multiple Regression: Predicting Petal Length</h3>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Predict petal length from other measurements</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>iris_result <span class="ot">&lt;-</span> <span class="fu">rwa_multiregress</span>(</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="at">df =</span> iris,</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;Petal.Length&quot;</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>  <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;Sepal.Length&quot;</span>, <span class="st">&quot;Sepal.Width&quot;</span>, <span class="st">&quot;Petal.Width&quot;</span>),</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>  <span class="at">applysigns =</span> <span class="cn">TRUE</span></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>)</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;R-squared:&quot;</span>, <span class="fu">round</span>(iris_result<span class="sc">$</span>rsquare, <span class="dv">4</span>), <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt; R-squared: 0.968</span></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>iris_result<span class="sc">$</span>result</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="co">#&gt;      Variables Raw.RelWeight Rescaled.RelWeight Sign Sign.Rescaled.RelWeight</span></span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a><span class="co">#&gt; 1 Sepal.Length    0.39393902           40.69569    +                40.69569</span></span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a><span class="co">#&gt; 2  Sepal.Width    0.09741133           10.06303    -               -10.06303</span></span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a><span class="co">#&gt; 3  Petal.Width    0.47666141           49.24128    +                49.24128</span></span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a></span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a><span class="co"># Visualize</span></span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a><span class="fu">plot_rwa</span>(iris_result)</span></code></pre></div>
+<p><img role="img" aria-label src="data:image/png;base64,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" alt width="100%" /></p>
+</div>
+<div id="logistic-regression-predicting-species" class="section level3">
+<h3>Logistic Regression: Predicting Species</h3>
+<p>For logistic regression, we need a binary outcome. Let’s predict
+whether a flower is <em>Iris setosa</em> or not:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># Create binary outcome for setosa classification</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>iris_binary <span class="ot">&lt;-</span> iris <span class="sc">%&gt;%</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">is_setosa =</span> <span class="fu">ifelse</span>(Species <span class="sc">==</span> <span class="st">&quot;setosa&quot;</span>, <span class="dv">1</span>, <span class="dv">0</span>))</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="co"># Logistic RWA</span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>iris_logit <span class="ot">&lt;-</span> <span class="fu">rwa_logit</span>(</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>  <span class="at">df =</span> iris_binary,</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;is_setosa&quot;</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>  <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;Sepal.Length&quot;</span>, <span class="st">&quot;Sepal.Width&quot;</span>, <span class="st">&quot;Petal.Length&quot;</span>, <span class="st">&quot;Petal.Width&quot;</span>),</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>  <span class="at">applysigns =</span> <span class="cn">TRUE</span></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a>)</span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a></span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Pseudo R-squared:&quot;</span>, <span class="fu">round</span>(iris_logit<span class="sc">$</span>rsquare, <span class="dv">4</span>), <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a><span class="co">#&gt; Pseudo R-squared: 4.2963</span></span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a>iris_logit<span class="sc">$</span>result</span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a><span class="co">#&gt;      Variables Raw.RelWeight Rescaled.RelWeight Sign      Sign</span></span>
+<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a><span class="co">#&gt; 1 Sepal.Length     0.8886415           20.68403    - -20.68403</span></span>
+<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a><span class="co">#&gt; 2  Sepal.Width     0.4925694           11.46505    +  11.46505</span></span>
+<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a><span class="co">#&gt; 3 Petal.Length     1.4086229           32.78712    - -32.78712</span></span>
+<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a><span class="co">#&gt; 4  Petal.Width     1.5064354           35.06380    - -35.06380</span></span></code></pre></div>
+<p>This analysis reveals which measurements are most important for
+distinguishing <em>Iris setosa</em> from the other species.</p>
+</div>
+</div>
+<div id="comparing-methods" class="section level2">
+<h2>Comparing Methods</h2>
+<p>Let’s demonstrate how the same predictors can yield different
+importance rankings depending on the outcome type:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># Create comparison dataset</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>comparison_data <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">high_mpg =</span> <span class="fu">ifelse</span>(mpg <span class="sc">&gt;</span> <span class="fu">median</span>(mpg), <span class="dv">1</span>, <span class="dv">0</span>))</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="co"># Multiple regression on continuous mpg</span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>multi_result <span class="ot">&lt;-</span> <span class="fu">rwa_multiregress</span>(</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>  comparison_data, <span class="st">&quot;mpg&quot;</span>, </span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>)</span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a><span class="co"># Logistic regression on binary high_mpg</span></span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>logit_result <span class="ot">&lt;-</span> <span class="fu">rwa_logit</span>(</span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a>  comparison_data, <span class="st">&quot;high_mpg&quot;</span>, </span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>)</span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a>)</span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a></span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a><span class="co"># Compare rankings</span></span>
+<span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a>comparison <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb16-19"><a href="#cb16-19" tabindex="-1"></a>  <span class="at">Variable =</span> multi_result<span class="sc">$</span>result<span class="sc">$</span>Variables,</span>
+<span id="cb16-20"><a href="#cb16-20" tabindex="-1"></a>  <span class="at">Multiple_Pct =</span> <span class="fu">round</span>(multi_result<span class="sc">$</span>result<span class="sc">$</span>Rescaled.RelWeight, <span class="dv">1</span>),</span>
+<span id="cb16-21"><a href="#cb16-21" tabindex="-1"></a>  <span class="at">Logistic_Pct =</span> <span class="fu">round</span>(logit_result<span class="sc">$</span>result<span class="sc">$</span>Rescaled.RelWeight, <span class="dv">1</span>)</span>
+<span id="cb16-22"><a href="#cb16-22" tabindex="-1"></a>)</span>
+<span id="cb16-23"><a href="#cb16-23" tabindex="-1"></a></span>
+<span id="cb16-24"><a href="#cb16-24" tabindex="-1"></a>comparison <span class="sc">%&gt;%</span></span>
+<span id="cb16-25"><a href="#cb16-25" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(Multiple_Pct))</span>
+<span id="cb16-26"><a href="#cb16-26" tabindex="-1"></a><span class="co">#&gt;   Variable Multiple_Pct Logistic_Pct</span></span>
+<span id="cb16-27"><a href="#cb16-27" tabindex="-1"></a><span class="co">#&gt; 1       wt         31.9         40.4</span></span>
+<span id="cb16-28"><a href="#cb16-28" tabindex="-1"></a><span class="co">#&gt; 2      cyl         24.7         22.2</span></span>
+<span id="cb16-29"><a href="#cb16-29" tabindex="-1"></a><span class="co">#&gt; 3     disp         22.2         22.4</span></span>
+<span id="cb16-30"><a href="#cb16-30" tabindex="-1"></a><span class="co">#&gt; 4       hp         21.2         15.0</span></span></code></pre></div>
+<p>The relative importance of predictors may differ between continuous
+and binary outcomes because:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Different relationships</strong>: A predictor’s linear
+relationship with the continuous outcome may differ from its
+relationship with the probability of the binary outcome.</li>
+<li><strong>Threshold effects</strong>: Binary outcomes are sensitive to
+whether predictors help distinguish cases near the classification
+boundary.</li>
+</ol>
+</div>
+<div id="best-practices" class="section level2">
+<h2>Best Practices</h2>
+<div id="choose-the-right-method" class="section level3">
+<h3>1. Choose the Right Method</h3>
+<ul>
+<li>Use <code>rwa_multiregress()</code> for continuous outcomes</li>
+<li>Use <code>rwa_logit()</code> for binary (0/1) outcomes</li>
+<li>Let <code>rwa()</code> auto-detect when unsure</li>
+</ul>
+</div>
+<div id="check-your-data" class="section level3">
+<h3>2. Check Your Data</h3>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co"># Always check outcome distribution for binary variables</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="fu">table</span>(mtcars_binary<span class="sc">$</span>high_mpg)</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="co">#&gt;  0  1 </span></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="co">#&gt; 17 15</span></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="co"># Ensure reasonable sample size</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Sample size:&quot;</span>, <span class="fu">nrow</span>(mtcars), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a><span class="co">#&gt; Sample size: 32</span></span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Predictors:&quot;</span>, <span class="dv">4</span>, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a><span class="co">#&gt; Predictors: 4</span></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Observations per predictor:&quot;</span>, <span class="fu">nrow</span>(mtcars) <span class="sc">/</span> <span class="dv">4</span>, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a><span class="co">#&gt; Observations per predictor: 8</span></span></code></pre></div>
+<p>A general guideline is to have at least 10-20 observations per
+predictor.</p>
+</div>
+<div id="consider-bootstrap-for-inference" class="section level3">
+<h3>3. Consider Bootstrap for Inference</h3>
+<p>For statistical significance testing, combine with bootstrap methods
+(note: currently only available for multiple regression):</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="co"># Bootstrap with multiple regression</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>result_boot <span class="ot">&lt;-</span> <span class="fu">rwa</span>(</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>  <span class="at">df =</span> mtcars,</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>  <span class="at">predictors =</span> <span class="fu">c</span>(<span class="st">&quot;cyl&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>),</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>  <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>  <span class="at">n_bootstrap =</span> <span class="dv">1000</span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>)</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>result_boot<span class="sc">$</span>result</span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Raw.RelWeight.CI.Lower</span></span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a><span class="co">#&gt; 1        wt     0.2706812           31.89607    -              0.1993936</span></span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2096904           24.70914    -              0.1660314</span></span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a><span class="co">#&gt; 3      disp     0.1883043           22.18908    -              0.1338067</span></span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a><span class="co">#&gt; 4        hp     0.1799590           21.20570    -              0.1317087</span></span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Upper Random.Diff.CI.Lower Random.Diff.CI.Upper</span></span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1"></a><span class="co">#&gt; 1              0.3375798           0.18696170            0.3395893</span></span>
+<span id="cb18-18"><a href="#cb18-18" tabindex="-1"></a><span class="co">#&gt; 2              0.2528465           0.12171082            0.2470339</span></span>
+<span id="cb18-19"><a href="#cb18-19" tabindex="-1"></a><span class="co">#&gt; 3              0.2201708           0.09216134            0.2091859</span></span>
+<span id="cb18-20"><a href="#cb18-20" tabindex="-1"></a><span class="co">#&gt; 4              0.2192410           0.05914634            0.1963703</span></span>
+<span id="cb18-21"><a href="#cb18-21" tabindex="-1"></a><span class="co">#&gt;   Raw.Significant</span></span>
+<span id="cb18-22"><a href="#cb18-22" tabindex="-1"></a><span class="co">#&gt; 1            TRUE</span></span>
+<span id="cb18-23"><a href="#cb18-23" tabindex="-1"></a><span class="co">#&gt; 2            TRUE</span></span>
+<span id="cb18-24"><a href="#cb18-24" tabindex="-1"></a><span class="co">#&gt; 3            TRUE</span></span>
+<span id="cb18-25"><a href="#cb18-25" tabindex="-1"></a><span class="co">#&gt; 4            TRUE</span></span></code></pre></div>
+</div>
+</div>
+<div id="summary" class="section level2">
+<h2>Summary</h2>
+<table>
+<colgroup>
+<col width="19%" />
+<col width="26%" />
+<col width="23%" />
+<col width="30%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Function</th>
+<th>Outcome Type</th>
+<th>Key Output</th>
+<th>Weights Sum To</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>rwa_multiregress()</code></td>
+<td>Continuous</td>
+<td>R², Raw &amp; Rescaled Weights</td>
+<td>100%</td>
+</tr>
+<tr class="even">
+<td><code>rwa_logit()</code></td>
+<td>Binary (0/1)</td>
+<td>R², Raw &amp; Rescaled Weights</td>
+<td>100%</td>
+</tr>
+<tr class="odd">
+<td><code>rwa()</code></td>
+<td>Either</td>
+<td>Auto-detects + sorting + bootstrap</td>
+<td>100%</td>
+</tr>
+</tbody>
+</table>
+<p>Both methods provide valuable insights into predictor importance
+while accounting for multicollinearity. Choose the appropriate method
+based on your outcome variable type, and consider using bootstrap
+confidence intervals for formal statistical inference.</p>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<ul>
+<li><p>Johnson, J. W. (2000). A heuristic method for estimating the
+relative weight of predictor variables in multiple regression.
+<em>Multivariate Behavioral Research</em>, 35(1), 1-19.</p></li>
+<li><p>Tonidandel, S., &amp; LeBreton, J. M. (2011). Relative importance
+analysis: A useful supplement to regression analysis. <em>Journal of
+Business and Psychology</em>, 26(1), 1-9.</p></li>
+<li><p>Tonidandel, S., &amp; LeBreton, J. M. (2015). RWA Web: A free,
+comprehensive, web-based, and user-friendly tool for relative weight
+analyses. <em>Journal of Business and Psychology</em>, 30(2),
+207-216.</p></li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

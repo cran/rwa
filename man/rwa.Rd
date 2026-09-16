@@ -9,13 +9,16 @@ rwa(
   outcome,
   predictors,
   applysigns = FALSE,
+  method = "auto",
   sort = TRUE,
   bootstrap = FALSE,
   n_bootstrap = 1000,
   conf_level = 0.95,
   focal = NULL,
   comprehensive = FALSE,
-  include_rescaled_ci = FALSE
+  include_rescaled_ci = FALSE,
+  use = "pairwise.complete.obs",
+  weight = NULL
 )
 }
 \arguments{
@@ -27,44 +30,116 @@ Must be a numeric variable.}
 \item{predictors}{Predictor variable(s), to be specified as a vector of
 string(s) or bare input(s). All variables must be numeric.}
 
-\item{applysigns}{Logical value specifying whether to show an estimate that applies the sign. Defaults to \code{FALSE}.}
+\item{applysigns}{Logical value specifying whether to show an estimate that
+applies the sign. Defaults to \code{FALSE}.}
 
-\item{sort}{Logical value specifying whether to sort results by rescaled relative weights in descending order. Defaults to \code{TRUE}.}
+\item{method}{String to specify the method of regression to apply. Valid
+values include:
+\itemize{
+\item \code{"auto"}: automatically detect whether to use multiple regression or
+logistic regression based on the outcome variable provided.
+\item \code{"multiple"}: use multiple regression.
+\item \code{"logistic"}: use logistic regression.
+}}
 
-\item{bootstrap}{Logical value specifying whether to calculate bootstrap confidence intervals. Defaults to \code{FALSE}.}
+\item{sort}{Logical value specifying whether to sort results by rescaled
+relative weights in descending order. Defaults to \code{TRUE}.}
 
-\item{n_bootstrap}{Number of bootstrap samples to use when bootstrap = TRUE. Defaults to 1000.}
+\item{bootstrap}{Logical value specifying whether to calculate bootstrap
+confidence intervals. Defaults to \code{FALSE}. Currently only supported for
+multiple regression.}
+
+\item{n_bootstrap}{Number of bootstrap samples to use when bootstrap = TRUE.
+Defaults to 1000.}
 
 \item{conf_level}{Confidence level for bootstrap intervals. Defaults to 0.95.}
 
 \item{focal}{Focal variable for bootstrap comparisons (optional).}
 
-\item{comprehensive}{Whether to run comprehensive bootstrap analysis including random variable and focal comparisons.}
+\item{comprehensive}{Whether to run comprehensive bootstrap analysis
+including random variable comparisons and, when \code{focal} is supplied,
+comparisons against that predictor.}
 
-\item{include_rescaled_ci}{Logical value specifying whether to include confidence intervals for rescaled weights. Defaults to \code{FALSE} due to compositional data constraints. Use with caution.}
+\item{include_rescaled_ci}{Logical value specifying whether to include
+confidence intervals for rescaled weights. Defaults to \code{FALSE} due to
+compositional data constraints. Use with caution.}
+
+\item{use}{Method for handling missing data when computing correlations. Options are:
+"everything" (remaining missing values propagate, causing a non-finite
+correlation matrix error if correlations cannot be estimated),
+"all.obs" (error for remaining missing predictors in unweighted analysis),
+"complete.obs" (listwise deletion),
+"na.or.complete" (listwise deletion; no complete cases produces an
+insufficient-data error rather than an unusable matrix of NAs),
+"pairwise.complete.obs" (pairwise deletion, default).
+See \code{\link[stats]{cor}} for more details. Only applicable for multiple regression.
+Rows with missing outcomes are always removed first, including for
+"all.obs". When \code{weight} is specified, remaining missing weights
+cause an error for "all.obs" and are removed otherwise. Missing predictors
+are then removed by listwise deletion for every weighted mode, including
+"all.obs". Thus weighted correlations always use complete cases, regardless
+of \code{use}; weighted pairwise correlation is not implemented.}
+
+\item{weight}{Optional name of a weight variable in the data frame. If provided,
+a weighted correlation matrix will be computed using the specified weights.
+Non-missing weights must be numeric, finite, and strictly positive (zero
+weights are not supported). Missing weights follow the \code{use} rules.
+Defaults to \code{NULL}
+(unweighted analysis). Only applicable for multiple regression.}
 }
 \value{
 \code{rwa()} returns a list of outputs, as follows:
 \itemize{
 \item \code{predictors}: character vector of names of the predictor variables used.
-\item \code{rsquare}: the rsquare value of the regression model.
-\item \code{result}: the final output of the importance metrics (sorted by Rescaled.RelWeight in descending order by default).
+\item \code{rsquare}: the rsquare value of the regression model (multiple regression only).
+\item \code{result}: the final output of the importance metrics (sorted by
+Rescaled.RelWeight in descending order by default).
 \itemize{
 \item The \code{Rescaled.RelWeight} column sums up to 100.
-\item The \code{Sign} column indicates whether a predictor is positively or negatively correlated with the outcome.
+\item The \code{Sign} column indicates whether a predictor is positively or
+negatively correlated with the outcome.
 \item When bootstrap = TRUE, includes confidence interval columns for raw weights.
-\item Rescaled weight CIs are available via include_rescaled_ci = TRUE but not recommended for inference.
+\item When bootstrap = TRUE, \code{Random.Diff.CI.Lower}/\code{Random.Diff.CI.Upper} give
+the interval for the difference between each predictor's weight and the
+weight of a randomly generated variable, and \code{Raw.Significant} is \code{TRUE}
+when \code{Random.Diff.CI.Lower} is above zero. Significance is assessed this
+way, and not from the interval around the weight itself, because raw
+relative weights are non-negative: an unrelated predictor still receives
+a small positive weight, so an interval around it would almost always
+exclude zero. Comparing each weight to that of a randomly generated
+variable is the approach suggested by Tonidandel, LeBreton and Johnson
+(2009; \doi{10.1037/a0017735}) as a way to judge whether a weight
+exceeds what chance alone would produce. The \code{Raw.Significant} cutoff
+applied here is directional: a predictor is significant only when it
+exceeds the random variable (\code{Random.Diff.CI.Lower > 0}), because an
+interval lying entirely below zero indicates the predictor performed
+worse than noise, which is not evidence of importance in either
+direction.
+\item Rescaled weight CIs are available via include_rescaled_ci = TRUE but not
+recommended for inference.
 }
-\item \code{n}: indicates the number of observations used in the analysis.
+\item \code{n}: complete-case observation count for the selected analysis variables
+(and weight, if supplied). Unweighted pairwise correlations may use more
+observations than this conservative count.
+\item \code{n_weighted}: weighted results only; sum of original weights after all
+analysis filters. This is a population-size estimate only for appropriately
+calibrated weights and the retained population scope.
+\item \code{n_effective}: weighted results only; Kish's unequal-weighting effective
+sample size, \code{(sum(w)^2) / sum(w^2)}, calculated using scaled weights for
+numerical stability. This diagnostic ignores clustering, stratification,
+and weight/outcome relationships; it is not model degrees of freedom or
+the exact precision of RWA.
 \item \code{bootstrap}: bootstrap results (only present when bootstrap = TRUE), containing:
 \itemize{
 \item \code{ci_results}: confidence intervals for weights
 \item \code{boot_object}: raw bootstrap object for advanced analysis
 \item \code{n_bootstrap}: number of bootstrap samples used
 }
-\item \code{lambda}:
-\item \code{RXX}: Correlation matrix of all the predictor variables against each other.
-\item \code{RXY}: Correlation values of the predictor variables against the outcome variable.
+\item \code{lambda}: lambda matrix from the RWA calculation.
+\item \code{RXX}: Correlation matrix of all the predictor variables against each
+other. Not available for logistic regression.
+\item \code{RXY}: Correlation values of the predictor variables against the outcome
+variable. Not available for logistic regression.
 }
 }
 \description{
@@ -73,42 +148,106 @@ returns a list of outputs. RWA provides a heuristic method for estimating
 the relative weight of predictor variables in multiple regression, which
 involves creating a multiple regression with on a set of transformed
 predictors which are orthogonal to each other but maximally related to the
-original set of predictors.
-\code{rwa()} is optimised for dplyr pipes and shows positive / negative signs for weights.
+original set of predictors. \code{rwa()} is optimised for dplyr pipes and shows
+positive / negative signs for weights.
 }
 \details{
 \code{rwa()} produces raw relative weight values (epsilons) as well as rescaled
 weights (scaled as a percentage of predictable variance) for every predictor
 in the model. Signs are added to the weights when the \code{applysigns} argument
-is set to \code{TRUE}.
-See https://www.scotttonidandel.com/rwa-web for the
+is set to \code{TRUE}. See \url{https://www.scotttonidandel.com/rwa-web} for the
 original implementation that inspired this package.
+
+This function is a wrapper around \code{rwa_multiregress()} and \code{rwa_logit()},
+automatically selecting the appropriate method based on the outcome variable
+or the \code{method} argument.
+
+In brief, for the two missing-data and weighting arguments:
+\itemize{
+\item Without \code{weight}, missing values are handled by \code{use}, which defaults to
+pairwise deletion when correlating predictors.
+\item With \code{weight}, the analysis always uses complete cases across the outcome,
+the predictors, and the weight. Weighted pairwise deletion is not
+implemented, so \code{use} does not change a weighted result.
+\item In both cases, rows with a missing outcome are dropped first.
+}
+
+Use weights when the analysis should represent a target population rather
+than the achieved sample. Comparing weighted with unweighted results is
+informative: a large difference indicates that sample composition matters.
+
+Multiple-regression estimates require a finite joint correlation matrix.
+Its smallest eigenvalue must be at least minus
+\code{sqrt(.Machine$double.eps) * max(1, max(abs(eigenvalues)))}. The predictor
+block must have strictly positive computed eigenvalues and the transformation
+must be solvable. No additional conditioning cutoff is imposed on previously
+estimable models; highly correlated predictors can still yield sensitive
+estimates. Calculated R-squared must not exceed one by
+more than \code{sqrt(.Machine$double.eps)}; the fit is checked separately because
+small matrix errors can be amplified by nearly collinear predictors.
+An exactly fitted outcome (a singular joint matrix) is
+allowed when the predictor block is positive definite. Invalid matrices,
+constant variables, and insufficient observations cause informative errors;
+variables are not dropped and matrices are not silently repaired.
+
+Weighted analysis is observation-weighted RWA. Bootstrap intervals use
+independent, identically distributed (iid) individual-row resampling, with
+each row's original weight carried along, not sampling proportional to weights.
+Rows with missing outcomes are removed before resampling; other missing-data
+filters are applied within each sample, preserving the outcome-complete
+sampling frame. A degenerate sample stops the bootstrap with an error:
+samples are not skipped, retried, or allowed to lose predictors.
+Clusters, strata, and replicate-weight survey designs are not supported;
+a weight column alone does not provide general complex-survey variance.
+See \code{vignette("weighted-missing-data")} for examples and limitations.
 }
 \examples{
 library(ggplot2)
 # Basic RWA (results sorted by default)
-rwa(diamonds,"price",c("depth","carat"))
+rwa(diamonds, "price", c("depth", "carat"))
 
 # RWA without sorting (preserves original predictor order)
-rwa(diamonds,"price",c("depth","carat"), sort = FALSE)
+rwa(diamonds, "price", c("depth", "carat"), sort = FALSE)
+
+# Plot results using plot_rwa()
+diamonds |>
+  rwa("price", c("depth", "carat", "x", "y")) |>
+  plot_rwa()
 
 \donttest{
 # For faster examples, use a subset of data for bootstrap
 diamonds_small <- diamonds[sample(nrow(diamonds), 1000), ]
 
+# RWA with different missing data handling
+# Use complete.obs for listwise deletion
+rwa(diamonds_small, "price", c("depth", "carat"), use = "complete.obs")
+
+# RWA with weights
+diamonds_small$sample_weight <- runif(nrow(diamonds_small), 0.5, 2)
+rwa(diamonds_small, "price", c("depth", "carat"), weight = "sample_weight")
+
 # RWA with bootstrap confidence intervals (raw weights only)
-rwa(diamonds_small,"price",c("depth","carat"), bootstrap = TRUE, n_bootstrap = 100)
+rwa(diamonds_small, "price", c("depth", "carat"),
+    bootstrap = TRUE, n_bootstrap = 100)
 
 # Include rescaled weight CIs (use with caution for inference)
-rwa(diamonds_small,"price",c("depth","carat"), bootstrap = TRUE, 
-    include_rescaled_ci = TRUE, n_bootstrap = 100)
+rwa(diamonds_small, "price", c("depth", "carat"),
+    bootstrap = TRUE, include_rescaled_ci = TRUE, n_bootstrap = 100)
 
 # Comprehensive bootstrap analysis with focal variable
-result <- rwa(diamonds_small,"price",c("depth","carat","table"), 
-              bootstrap = TRUE, comprehensive = TRUE, focal = "carat", 
+result <- rwa(diamonds_small, "price", c("depth", "carat", "table"),
+              bootstrap = TRUE, comprehensive = TRUE, focal = "carat",
               n_bootstrap = 100)
 # View confidence intervals
 result$bootstrap$ci_results
 }
 
+# Based on logistic regression (auto-detected from binary outcome)
+diamonds$IsIdeal <- as.numeric(diamonds$cut == "Ideal")
+rwa(diamonds, "IsIdeal", c("depth", "carat"))
+
+}
+\seealso{
+\code{\link[=plot_rwa]{plot_rwa()}} for plotting results, \code{\link[=rwa_multiregress]{rwa_multiregress()}} and
+\code{\link[=rwa_logit]{rwa_logit()}} for the underlying implementations.
 }

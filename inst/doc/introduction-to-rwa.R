@@ -128,6 +128,22 @@ rwa_result %>% plot_rwa()
 # The rescaled relative weights
 rwa_result$result
 
+## ----weights-example----------------------------------------------------------
+survey_like <- mtcars
+survey_like$respondent_weight <- rep(c(0.8, 1.2, 1.5, 0.6), 8)
+
+weighted_result <- survey_like %>%
+  rwa(outcome = "mpg",
+      predictors = c("cyl", "disp", "hp"),
+      weight = "respondent_weight")
+
+weighted_result$result
+
+# Weighted results carry two extra sample-size diagnostics
+c(n = weighted_result$n,
+  n_weighted = weighted_result$n_weighted,
+  n_effective = weighted_result$n_effective)
+
 ## ----eval=FALSE---------------------------------------------------------------
 # vignette("bootstrap-confidence-intervals", package = "rwa")
 
@@ -250,6 +266,13 @@ missing_summary <- mtcars %>%
   summarise_all(~sum(is.na(.)))
 
 print(missing_summary)
+
+## ----missing-data-use, eval=FALSE---------------------------------------------
+# # Default: pairwise deletion
+# rwa(df, "outcome", c("x1", "x2"))
+# 
+# # Listwise deletion instead
+# rwa(df, "outcome", c("x1", "x2"), use = "complete.obs")
 
 ## ----eval=FALSE---------------------------------------------------------------
 # vignette("bootstrap-confidence-intervals", package = "rwa")

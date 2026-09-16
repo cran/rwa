@@ -12,7 +12,7 @@
 
 <meta name="author" content="Martin Chan" />
 
-<meta name="date" content="2026-01-20" />
+<meta name="date" content="2026-09-16" />
 
 <title>Bootstrap Confidence Intervals for Relative Weights Analysis</title>
 
@@ -50,8 +50,9 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -62,7 +63,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -341,7 +342,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Bootstrap Confidence Intervals for Relative
 Weights Analysis</h1>
 <h4 class="author">Martin Chan</h4>
-<h4 class="date">2026-01-20</h4>
+<h4 class="date">2026-09-16</h4>
 
 
 
@@ -378,11 +379,71 @@ from your original data 2. <strong>Calculates RWA</strong> for each
 bootstrap sample<br />
 3. <strong>Estimates confidence intervals</strong> from the distribution
 of bootstrap results 4. <strong>Enables significance testing</strong> by
-examining whether CIs include zero</p>
+comparing each predictor against a randomly generated variable</p>
+</div>
+<div id="how-significance-is-assessed" class="section level3">
+<h3>How significance is assessed</h3>
+<p>A relative weight <strong>cannot be tested against zero</strong>. Raw
+relative weights are non-negative, so a predictor with no real
+relationship to the outcome still receives a small positive weight, and
+an interval around that weight will almost always exclude zero.</p>
+<p>Following Tonidandel, LeBreton and Johnson (2009) — who suggest
+comparing a weight against that of a randomly generated variable to
+judge whether it exceeds what chance alone would produce (see also the
+discussion in <code>vignette(&quot;evaluating-rwa-method-reference&quot;)</code>)
+— significance is instead assessed by adding a <strong>randomly
+generated variable</strong> to the model and bootstrapping the
+<em>difference</em> between each predictor’s weight and the random
+variable’s weight.</p>
+<p>The directional cutoff applied by this package is: a predictor is
+flagged significant only when the <strong>lower bound</strong> of that
+difference interval is above zero, meaning it explains meaningfully more
+variance than noise would. An interval lying entirely <em>below</em>
+zero means the predictor performed worse than the random variable, which
+is equally not evidence of importance, so it is not flagged significant
+either.</p>
+<p>This means the package reports two distinct intervals:</p>
+<table>
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Columns</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>Raw.RelWeight.CI.Lower</code> / <code>.Upper</code></td>
+<td>Descriptive interval around the weight itself. <strong>Not</strong>
+a significance test.</td>
+</tr>
+<tr class="even">
+<td><code>Random.Diff.CI.Lower</code> / <code>.Upper</code></td>
+<td>Difference from a random variable’s weight.
+<code>Raw.Significant</code> is <code>TRUE</code> when
+<code>Random.Diff.CI.Lower &gt; 0</code>.</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div id="basic-bootstrap-analysis" class="section level2">
 <h2>Basic Bootstrap Analysis</h2>
+<div id="sampling-scope" class="section level3">
+<h3>Sampling scope</h3>
+<p>The implementation uses independent, identically distributed (iid)
+individual-row resampling. For observation-weighted RWA, each sampled
+row carries its original weight; clusters, strata, and replicate-weight
+survey designs are not supported. Outcome-missing rows are removed
+before resampling, while other missing-data filters are applied within
+each sample. Invalid samples stop with an error rather than dropping
+predictors or retrying. See
+<code>vignette(&quot;weighted-missing-data&quot;)</code> for the filtering
+contract and examples.</p>
+</div>
 <div id="simple-bootstrap-example" class="section level3">
 <h3>Simple Bootstrap Example</h3>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Bootstrap analysis with 1000 samples</span></span>
@@ -396,24 +457,31 @@ examining whether CIs include zero</p>
 <span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co"># View results with confidence intervals</span></span>
 <span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>result_bootstrap<span class="sc">$</span>result</span>
 <span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Raw.RelWeight.CI.Lower</span></span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt; 1        hp     0.2321744           29.79691    -             0.17792555</span></span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2284797           29.32274    -             0.18093071</span></span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; 3      disp     0.2221469           28.50999    -             0.15732865</span></span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; 4      gear     0.0963886           12.37037    +             0.04372106</span></span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Upper Raw.Significant</span></span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; 1              0.2796847            TRUE</span></span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt; 2              0.2828046            TRUE</span></span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; 3              0.2750820            TRUE</span></span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&gt; 4              0.1749625            TRUE</span></span></code></pre></div>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt; 1        hp     0.2321744           29.79691    -             0.17994305</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2284797           29.32274    -             0.17978211</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; 3      disp     0.2221469           28.50999    -             0.15733870</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; 4      gear     0.0963886           12.37037    +             0.04021568</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Upper Random.Diff.CI.Lower Random.Diff.CI.Upper</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; 1              0.2776723           0.18500702            0.3029704</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt; 2              0.2817795           0.15651347            0.3036993</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; 3              0.2806779           0.15031200            0.2954721</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&gt; 4              0.1725336           0.02443039            0.1955195</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&gt;   Raw.Significant</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&gt; 1            TRUE</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&gt; 2            TRUE</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt; 3            TRUE</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt; 4            TRUE</span></span></code></pre></div>
 </div>
 <div id="understanding-bootstrap-output" class="section level3">
 <h3>Understanding Bootstrap Output</h3>
 <p>The bootstrap analysis enhances the standard RWA output with:</p>
 <ul>
-<li><strong>Raw.RelWeight.CI.Lower/Upper</strong>: 95% confidence
-intervals for raw weights</li>
-<li><strong>Raw.Significant</strong>: Automatic significance flagging
-(CI doesn’t include zero)</li>
+<li><strong>Raw.RelWeight.CI.Lower/Upper</strong>: confidence intervals
+around each raw weight, for description rather than testing</li>
+<li><strong>Random.Diff.CI.Lower/Upper</strong>: confidence intervals
+for the difference from a randomly generated variable’s weight</li>
+<li><strong>Raw.Significant</strong>: significance flag,
+<code>TRUE</code> when the random-comparison interval excludes zero</li>
 </ul>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Bootstrap-specific information</span></span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Bootstrap samples used:&quot;</span>, result_bootstrap<span class="sc">$</span>bootstrap<span class="sc">$</span>n_bootstrap, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
@@ -424,10 +492,10 @@ intervals for raw weights</li>
 <span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 × 6</span></span>
 <span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt;   variable weight_index ci_lower ci_upper ci_method ci_type</span></span>
 <span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;           &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;  </span></span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.181     0.283 bca       raw    </span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.157     0.275 bca       raw    </span></span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.178     0.280 bca       raw    </span></span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0437    0.175 bca       raw</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.180     0.282 bca       raw    </span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.157     0.281 bca       raw    </span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.180     0.278 bca       raw    </span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0402    0.173 bca       raw</span></span>
 <span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a></span>
 <span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co"># Identify significant predictors</span></span>
 <span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>significant_vars <span class="ot">&lt;-</span> result_bootstrap<span class="sc">$</span>result <span class="sc">%&gt;%</span></span>
@@ -479,11 +547,14 @@ bootstrap tests</li>
 <span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a></span>
 <span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>custom_bootstrap<span class="sc">$</span>result</span>
 <span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Raw.RelWeight.CI.Lower</span></span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; 1       cyl     0.3837012           50.51586    -              0.2944963</span></span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; 2      disp     0.3758646           49.48414    -              0.2309624</span></span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Upper Raw.Significant</span></span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; 1              0.4553279            TRUE</span></span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; 2              0.4596469            TRUE</span></span></code></pre></div>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; 1       cyl     0.3837012           50.51586    -              0.2813497</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; 2      disp     0.3758646           49.48414    -              0.2309071</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Upper Random.Diff.CI.Lower Random.Diff.CI.Upper</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; 1              0.4568403            0.1748707            0.4470895</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; 2              0.4637872            0.2073237            0.4656827</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt;   Raw.Significant</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; 1            TRUE</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; 2            TRUE</span></span></code></pre></div>
 </div>
 </div>
 <div id="rescaled-weight-confidence-intervals" class="section level2">
@@ -504,17 +575,17 @@ not recommended for formal statistical inference.</p>
 <span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co"># Note the warning message about interpretation</span></span>
 <span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>result_rescaled_ci<span class="sc">$</span>result</span>
 <span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Raw.RelWeight.CI.Lower</span></span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; 1      disp     0.2793550           36.37966    -              0.2143641</span></span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2723144           35.46279    -              0.2103480</span></span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; 3        hp     0.2162184           28.15755    -              0.1469883</span></span>
-<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Upper Raw.Significant Rescaled.RelWeight.CI.Lower</span></span>
-<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="co">#&gt; 1              0.3521790            TRUE                    29.66272</span></span>
-<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt; 2              0.3283791            TRUE                    29.55396</span></span>
-<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co">#&gt; 3              0.2650235            TRUE                    20.72190</span></span>
-<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt;   Rescaled.RelWeight.CI.Upper</span></span>
-<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="co">#&gt; 1                    42.46211</span></span>
-<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a><span class="co">#&gt; 2                    42.58727</span></span>
-<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a><span class="co">#&gt; 3                    36.93194</span></span></code></pre></div>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; 1      disp     0.2793550           36.37966    -              0.2124971</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2723144           35.46279    -              0.2133034</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; 3        hp     0.2162184           28.15755    -              0.1438879</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Upper Random.Diff.CI.Lower Random.Diff.CI.Upper</span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="co">#&gt; 1              0.3456126           0.15780643            0.3218527</span></span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt; 2              0.3322052           0.11788124            0.2895544</span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co">#&gt; 3              0.2622216           0.02978695            0.2415767</span></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt;   Raw.Significant Rescaled.RelWeight.CI.Lower Rescaled.RelWeight.CI.Upper</span></span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="co">#&gt; 1            TRUE                    30.10095                    42.87168</span></span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a><span class="co">#&gt; 2            TRUE                    30.20278                    43.36890</span></span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a><span class="co">#&gt; 3            TRUE                    20.80491                    35.82311</span></span></code></pre></div>
 </div>
 <div id="why-rescaled-cis-are-problematic" class="section level3">
 <h3>Why Rescaled CIs Are Problematic</h3>
@@ -543,19 +614,26 @@ confidence intervals</strong> for statistical inference.</p>
 <span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a></span>
 <span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="fu">print</span>(diamond_rwa<span class="sc">$</span>result)</span>
 <span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Sign.Rescaled.RelWeight</span></span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="co">#&gt; 1     carat   0.275798498         32.3605816    +              32.3605816</span></span>
-<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="co">#&gt; 2         x   0.226692851         26.5988124    +              26.5988124</span></span>
-<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="co">#&gt; 3         z   0.215436341         25.2780395    +              25.2780395</span></span>
-<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="co">#&gt; 4         y   0.127891838         15.0060798    +              15.0060798</span></span>
-<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co">#&gt; 5     depth   0.003592696          0.4215459    -              -0.4215459</span></span>
-<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="co">#&gt; 6     table   0.002854589          0.3349408    -              -0.3349408</span></span>
-<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Lower Raw.RelWeight.CI.Upper Raw.Significant</span></span>
-<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="co">#&gt; 1           0.2426626893            0.316240918            TRUE</span></span>
-<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="co">#&gt; 2           0.2022522207            0.256183433            TRUE</span></span>
-<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="co">#&gt; 3           0.2011090617            0.234801281            TRUE</span></span>
-<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="co">#&gt; 4           0.0479587661            0.188165367            TRUE</span></span>
-<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="co">#&gt; 5           0.0009965771            0.004973382            TRUE</span></span>
-<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="co">#&gt; 6           0.0002526790            0.004088556            TRUE</span></span></code></pre></div>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="co">#&gt; 1     carat  0.2827671839        33.61747478    +             33.61747478</span></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="co">#&gt; 2         y  0.2410353741        28.65608554    +             28.65608554</span></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="co">#&gt; 3         x  0.2390627389        28.42156395    +             28.42156395</span></span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="co">#&gt; 4         z  0.0721865633         8.58207780    +              8.58207780</span></span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co">#&gt; 5     table  0.0053869575         0.64044174    +              0.64044174</span></span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="co">#&gt; 6     depth  0.0006927239         0.08235619    -             -0.08235619</span></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Lower Raw.RelWeight.CI.Upper Random.Diff.CI.Lower</span></span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="co">#&gt; 1           0.2540326046           0.3432575285          0.255325134</span></span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="co">#&gt; 2           0.2227669146           0.2868371992          0.221011017</span></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="co">#&gt; 3           0.2206290118           0.2847261569          0.218437901</span></span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="co">#&gt; 4          -0.0603570553           0.1169361261         -0.063730598</span></span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="co">#&gt; 5           0.0008142242           0.0086470381         -0.002033129</span></span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="co">#&gt; 6          -0.0020080833           0.0008013738         -0.003736398</span></span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a><span class="co">#&gt;   Random.Diff.CI.Upper Raw.Significant</span></span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a><span class="co">#&gt; 1         0.3379597540            TRUE</span></span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="co">#&gt; 2         0.2852931602            TRUE</span></span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a><span class="co">#&gt; 3         0.2827117062            TRUE</span></span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a><span class="co">#&gt; 4         0.1153072073           FALSE</span></span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a><span class="co">#&gt; 5         0.0071742124           FALSE</span></span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a><span class="co">#&gt; 6        -0.0002043083           FALSE</span></span></code></pre></div>
 </div>
 <div id="interpreting-results" class="section level3">
 <h3>Interpreting Results</h3>
@@ -568,16 +646,13 @@ confidence intervals</strong> for statistical inference.</p>
 <span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; Significant diamond price drivers (sorted by importance):</span></span>
 <span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="fu">print</span>(significant_drivers)</span>
 <span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt;   Variables Rescaled.RelWeight Sign.Rescaled.RelWeight</span></span>
-<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; 1     carat         32.3605816              32.3605816</span></span>
-<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; 2         x         26.5988124              26.5988124</span></span>
-<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; 3         z         25.2780395              25.2780395</span></span>
-<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; 4         y         15.0060798              15.0060798</span></span>
-<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt; 5     depth          0.4215459              -0.4215459</span></span>
-<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; 6     table          0.3349408              -0.3349408</span></span>
-<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a></span>
-<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Model R-squared:&quot;</span>, <span class="fu">round</span>(diamond_rwa<span class="sc">$</span>rsquare, <span class="dv">3</span>))</span>
-<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt; Model R-squared: 0.852</span></span></code></pre></div>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; 1     carat           33.61747                33.61747</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; 2         y           28.65609                28.65609</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; 3         x           28.42156                28.42156</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Model R-squared:&quot;</span>, <span class="fu">round</span>(diamond_rwa<span class="sc">$</span>rsquare, <span class="dv">3</span>))</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt; Model R-squared: 0.841</span></span></code></pre></div>
 </div>
 </div>
 <div id="best-practices" class="section level2">
@@ -600,38 +675,40 @@ confidence intervals</strong> for statistical inference.</p>
 </div>
 <div id="confidence-interval-interpretation" class="section level3">
 <h3>2. Confidence Interval Interpretation</h3>
+<p>The intervals around the raw weights describe
+<strong>precision</strong>, not significance. Use them to judge how
+tightly each weight is estimated; use <code>Raw.Significant</code> (from
+the random-variable comparison) to judge importance.</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Examine CI characteristics</span></span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>ci_data <span class="ot">&lt;-</span> result_bootstrap<span class="sc">$</span>bootstrap<span class="sc">$</span>ci_results<span class="sc">$</span>raw_weights</span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">head</span>(ci_data))</span>
 <span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 × 6</span></span>
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt;   variable weight_index ci_lower ci_upper ci_method ci_type</span></span>
 <span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;           &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;  </span></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.181     0.283 bca       raw    </span></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.157     0.275 bca       raw    </span></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.178     0.280 bca       raw    </span></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0437    0.175 bca       raw</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.180     0.282 bca       raw    </span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.157     0.281 bca       raw    </span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.180     0.278 bca       raw    </span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0402    0.173 bca       raw</span></span>
 <span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a></span>
 <span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co"># Assess precision</span></span>
 <span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>ci_analysis <span class="ot">&lt;-</span> ci_data <span class="sc">%&gt;%</span></span>
 <span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>    <span class="at">significant =</span> ci_lower <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">|</span> ci_upper <span class="sc">&lt;</span> <span class="dv">0</span>,</span>
-<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>    <span class="at">ci_width =</span> ci_upper <span class="sc">-</span> ci_lower,</span>
-<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>    <span class="at">precision =</span> <span class="fu">case_when</span>(</span>
-<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>      ci_width <span class="sc">&lt;</span> <span class="fl">0.05</span> <span class="sc">~</span> <span class="st">&quot;High precision&quot;</span>,</span>
-<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>      ci_width <span class="sc">&lt;</span> <span class="fl">0.15</span> <span class="sc">~</span> <span class="st">&quot;Medium precision&quot;</span>, </span>
-<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;Low precision&quot;</span></span>
-<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>    )</span>
-<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>  )</span>
-<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a></span>
-<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="fu">print</span>(ci_analysis)</span>
-<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 × 9</span></span>
-<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="co">#&gt;   variable weight_index ci_lower ci_upper ci_method ci_type significant ci_width</span></span>
-<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;           &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;   &lt;lgl&gt;          &lt;dbl&gt;</span></span>
-<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.181     0.283 bca       raw     TRUE           0.102</span></span>
-<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.157     0.275 bca       raw     TRUE           0.118</span></span>
-<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.178     0.280 bca       raw     TRUE           0.102</span></span>
-<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0437    0.175 bca       raw     TRUE           0.131</span></span>
-<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a><span class="co">#&gt; # ℹ 1 more variable: precision &lt;chr&gt;</span></span></code></pre></div>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>    <span class="at">ci_width =</span> ci_upper <span class="sc">-</span> ci_lower,</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>    <span class="at">precision =</span> <span class="fu">case_when</span>(</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>      ci_width <span class="sc">&lt;</span> <span class="fl">0.05</span> <span class="sc">~</span> <span class="st">&quot;High precision&quot;</span>,</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>      ci_width <span class="sc">&lt;</span> <span class="fl">0.15</span> <span class="sc">~</span> <span class="st">&quot;Medium precision&quot;</span>, </span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;Low precision&quot;</span></span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>    )</span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>  )</span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a></span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="fu">print</span>(ci_analysis)</span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 × 8</span></span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="co">#&gt;   variable weight_index ci_lower ci_upper ci_method ci_type ci_width precision  </span></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;           &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;      &lt;dbl&gt; &lt;chr&gt;      </span></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.180     0.282 bca       raw       0.102  Medium pre…</span></span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.157     0.281 bca       raw       0.123  Medium pre…</span></span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.180     0.278 bca       raw       0.0977 Medium pre…</span></span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0402    0.173 bca       raw       0.132  Medium pre…</span></span></code></pre></div>
 </div>
 <div id="bootstrap-method-selection" class="section level3">
 <h3>3. Bootstrap Method Selection</h3>
@@ -677,28 +754,31 @@ when possible</li>
 <h3>Memory Usage</h3>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Bootstrap objects can be large - access specific components</span></span>
 <span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">str</span>(result_bootstrap<span class="sc">$</span>bootstrap, <span class="at">max.level =</span> <span class="dv">1</span>)</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; List of 6</span></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt;  $ boot_object  :List of 11</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; List of 7</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt;  $ boot_object       :List of 11</span></span>
 <span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt;   ..- attr(*, &quot;class&quot;)= chr &quot;boot&quot;</span></span>
 <span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt;   ..- attr(*, &quot;boot_type&quot;)= chr &quot;boot&quot;</span></span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt;  $ ci_results   :List of 1</span></span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt;  $ n_bootstrap  : num 1000</span></span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt;  $ conf_level   : num 0.95</span></span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt;  $ comprehensive: logi FALSE</span></span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt;  $ focal        : NULL</span></span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a></span>
-<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co"># For memory efficiency, extract only needed results</span></span>
-<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>ci_summary <span class="ot">&lt;-</span> result_bootstrap<span class="sc">$</span>bootstrap<span class="sc">$</span>ci_results<span class="sc">$</span>raw_weights <span class="sc">%&gt;%</span></span>
-<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>  <span class="fu">select</span>(variable, ci_lower, ci_upper, ci_method)</span>
-<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a></span>
-<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="fu">print</span>(ci_summary)</span>
-<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 × 4</span></span>
-<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a><span class="co">#&gt;   variable ci_lower ci_upper ci_method</span></span>
-<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;    </span></span>
-<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="co">#&gt; 1 cyl        0.181     0.283 bca      </span></span>
-<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="co">#&gt; 2 disp       0.157     0.275 bca      </span></span>
-<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#&gt; 3 hp         0.178     0.280 bca      </span></span>
-<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a><span class="co">#&gt; 4 gear       0.0437    0.175 bca</span></span></code></pre></div>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt;  $ boot_object_random:List of 11</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt;   ..- attr(*, &quot;class&quot;)= chr &quot;boot&quot;</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt;   ..- attr(*, &quot;boot_type&quot;)= chr &quot;boot&quot;</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt;  $ ci_results        :List of 2</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt;  $ n_bootstrap       : num 1000</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt;  $ conf_level        : num 0.95</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co">#&gt;  $ comprehensive     : logi FALSE</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="co">#&gt;  $ focal             : NULL</span></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co"># For memory efficiency, extract only needed results</span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>ci_summary <span class="ot">&lt;-</span> result_bootstrap<span class="sc">$</span>bootstrap<span class="sc">$</span>ci_results<span class="sc">$</span>raw_weights <span class="sc">%&gt;%</span></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>  <span class="fu">select</span>(variable, ci_lower, ci_upper, ci_method)</span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="fu">print</span>(ci_summary)</span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 × 4</span></span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="co">#&gt;   variable ci_lower ci_upper ci_method</span></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;    </span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a><span class="co">#&gt; 1 cyl        0.180     0.282 bca      </span></span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a><span class="co">#&gt; 2 disp       0.157     0.281 bca      </span></span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a><span class="co">#&gt; 3 hp         0.180     0.278 bca      </span></span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a><span class="co">#&gt; 4 gear       0.0402    0.173 bca</span></span></code></pre></div>
 </div>
 </div>
 <div id="troubleshooting" class="section level2">
@@ -769,10 +849,10 @@ intervals</li>
 <span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a><span class="co">#&gt; Significant Predictors:</span></span>
 <span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a><span class="fu">print</span>(report_data)</span>
 <span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a><span class="co">#&gt;   Variables Rescaled.RelWeight Raw.RelWeight.CI.Lower Raw.RelWeight.CI.Upper</span></span>
-<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a><span class="co">#&gt; 1        hp           29.79691             0.17792555              0.2796847</span></span>
-<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a><span class="co">#&gt; 2       cyl           29.32274             0.18093071              0.2828046</span></span>
-<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a><span class="co">#&gt; 3      disp           28.50999             0.15732865              0.2750820</span></span>
-<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a><span class="co">#&gt; 4      gear           12.37037             0.04372106              0.1749625</span></span></code></pre></div>
+<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a><span class="co">#&gt; 1        hp           29.79691             0.17994305              0.2776723</span></span>
+<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a><span class="co">#&gt; 2       cyl           29.32274             0.17978211              0.2817795</span></span>
+<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a><span class="co">#&gt; 3      disp           28.50999             0.15733870              0.2806779</span></span>
+<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a><span class="co">#&gt; 4      gear           12.37037             0.04021568              0.1725336</span></span></code></pre></div>
 </div>
 </div>
 <div id="references" class="section level2">

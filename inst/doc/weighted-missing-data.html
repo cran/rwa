@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Observation weights and missing data</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Observation weights and missing data</h1>
+
+
+
+<div id="weighted-point-estimates" class="section level2">
+<h2>Weighted point estimates</h2>
+<p>Use <code>weight</code> to name a numeric column of observation
+weights. Non-missing weights must be finite and strictly positive; zero
+weights are not supported. The outcome and predictors must be numeric.
+Weighted RWA decomposes the R-squared from the weighted correlation
+matrix, matching weighted least-squares regression with an intercept on
+the same retained rows.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>d <span class="ot">&lt;-</span> mtcars</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>d<span class="sc">$</span>observation_weight <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">3</span>), <span class="dv">8</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">rwa</span>(d, <span class="st">&quot;mpg&quot;</span>, <span class="fu">c</span>(<span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>, <span class="st">&quot;disp&quot;</span>), <span class="at">method =</span> <span class="st">&quot;multiple&quot;</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>           <span class="at">weight =</span> <span class="st">&quot;observation_weight&quot;</span>, <span class="at">sort =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>fit<span class="sc">$</span>result</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt; 1        hp     0.2322933           26.66020    -</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co">#&gt; 2        wt     0.3546032           40.69765    -</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co">#&gt; 3      disp     0.2844148           32.64215    -</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="fu">c</span>(<span class="at">rwa =</span> fit<span class="sc">$</span>rsquare,</span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>  <span class="at">weighted_lm =</span> <span class="fu">summary</span>(<span class="fu">lm</span>(mpg <span class="sc">~</span> hp <span class="sc">+</span> wt <span class="sc">+</span> disp, <span class="at">data =</span> d,</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>                           <span class="at">weights =</span> observation_weight))<span class="sc">$</span>r.squared)</span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="co">#&gt;         rwa weighted_lm </span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co">#&gt;   0.8713113   0.8713113</span></span></code></pre></div>
+<p>Multiplying every weight by the same positive constant leaves
+relative weights, R-squared, and <code>n_effective</code> unchanged.
+Integer weights also give the same point estimates as repeating each row
+that many times. These point-estimate equivalences do not imply
+equivalent bootstrap sampling designs.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>d<span class="sc">$</span>scaled_weight <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">*</span> d<span class="sc">$</span>observation_weight</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>scaled <span class="ot">&lt;-</span> <span class="fu">rwa_multiregress</span>(d, <span class="st">&quot;mpg&quot;</span>, <span class="fu">c</span>(<span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>, <span class="st">&quot;disp&quot;</span>), <span class="at">weight =</span> <span class="st">&quot;scaled_weight&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">all.equal</span>(fit<span class="sc">$</span>result, scaled<span class="sc">$</span>result)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="fu">c</span>(<span class="at">original_effective =</span> fit<span class="sc">$</span>n_effective, <span class="at">scaled_effective =</span> scaled<span class="sc">$</span>n_effective)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; original_effective   scaled_effective </span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt;           24.82051           24.82051</span></span></code></pre></div>
+</div>
+<div id="missing-data-contract" class="section level2">
+<h2>Missing-data contract</h2>
+<p>Rows with missing outcomes are <strong>always removed first</strong>,
+even with <code>use = &quot;all.obs&quot;</code> or <code>&quot;everything&quot;</code>. For
+unweighted analysis, <code>use</code> then applies to correlations among
+the retained outcome and predictors:</p>
+<table>
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th><code>use</code></th>
+<th>Unweighted behavior after removing missing outcomes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>&quot;pairwise.complete.obs&quot;</code> (default)</td>
+<td>Use available pairs for each correlation. An incompatible joint
+matrix causes an error.</td>
+</tr>
+<tr class="even">
+<td><code>&quot;complete.obs&quot;</code></td>
+<td>Use rows complete on all analysis variables.</td>
+</tr>
+<tr class="odd">
+<td><code>&quot;na.or.complete&quot;</code></td>
+<td>Use complete rows when available. <code>cor()</code> would return
+NAs when none exist; RWA instead reports insufficient data.</td>
+</tr>
+<tr class="even">
+<td><code>&quot;all.obs&quot;</code></td>
+<td>Error if remaining predictors contain missing values.</td>
+</tr>
+<tr class="odd">
+<td><code>&quot;everything&quot;</code></td>
+<td>Missing values propagate to correlations; a non-finite matrix causes
+an informative RWA error.</td>
+</tr>
+</tbody>
+</table>
+<p>With weights, the default is effectively <strong>complete-case
+analysis</strong>, not weighted pairwise correlation. After removing
+missing outcomes:</p>
+<ol style="list-style-type: decimal">
+<li>Missing weights cause an error for <code>&quot;all.obs&quot;</code> and are
+removed for every other mode.</li>
+<li>Rows with missing predictors are removed for <strong>every weighted
+mode</strong>, including <code>&quot;all.obs&quot;</code> and
+<code>&quot;everything&quot;</code>.</li>
+</ol>
+<p>These exceptions preserve the package’s existing preprocessing.
+<code>all.obs</code> does not mean that every value in the original
+input must be observed. Weights are validated for type, finiteness, and
+positivity before row filtering.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>d<span class="sc">$</span>mpg[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>d<span class="sc">$</span>observation_weight[<span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>d<span class="sc">$</span>hp[<span class="dv">3</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>missing_fit <span class="ot">&lt;-</span> <span class="fu">rwa</span>(d, <span class="st">&quot;mpg&quot;</span>, <span class="fu">c</span>(<span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>, <span class="st">&quot;disp&quot;</span>), <span class="at">method =</span> <span class="st">&quot;multiple&quot;</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>                   <span class="at">weight =</span> <span class="st">&quot;observation_weight&quot;</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>retained <span class="ot">&lt;-</span> <span class="fu">complete.cases</span>(d[<span class="fu">c</span>(<span class="st">&quot;mpg&quot;</span>, <span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>, <span class="st">&quot;disp&quot;</span>, <span class="st">&quot;observation_weight&quot;</span>)])</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="fu">c</span>(<span class="at">n =</span> missing_fit<span class="sc">$</span>n, <span class="at">retained_rows =</span> <span class="fu">sum</span>(retained),</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  <span class="at">n_weighted =</span> missing_fit<span class="sc">$</span>n_weighted,</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  <span class="at">retained_weight_sum =</span> <span class="fu">sum</span>(d<span class="sc">$</span>observation_weight[retained]))</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt;                   n       retained_rows          n_weighted retained_weight_sum </span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt;                  29                  29                  80                  80</span></span></code></pre></div>
+<div id="counts-and-effective-sample-size" class="section level3">
+<h3>Counts and effective sample size</h3>
+<ul>
+<li><code>n</code> retains its existing meaning: the complete-case count
+for the selected variables (and weight, if provided). Unweighted
+pairwise correlations may use more observations than this conservative
+count.</li>
+<li><code>n_weighted</code> is included only for weighted results and
+sums <strong>original</strong> weights after outcome, missing-weight,
+and predictor-completeness filters. It represents population size only
+when weights are calibrated to that scale and the retained rows
+represent the intended population scope. Arbitrarily normalized weights
+do not supply a population count.</li>
+<li><code>n_effective</code> is included only for weighted results and
+is Kish’s unequal-weighting effective sample size:
+<code>(sum(w)^2) / sum(w^2)</code>. The calculation first scales weights
+by their maximum to avoid overflow or underflow when squaring them. It
+ignores clustering, stratification, and relationships between weights
+and outcomes. It is <strong>not</strong> model degrees of freedom, exact
+RWA precision, or a complete survey design effect.</li>
+</ul>
+<p>Both exported paths, <code>rwa()</code> and
+<code>rwa_multiregress()</code>, return these weighted-only diagnostics.
+Unweighted result names and structure are unchanged.</p>
+<p><code>plot_rwa()</code> reports both diagnostics in the caption for
+weighted results, so a weighted chart is not mistaken for an unweighted
+one:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">plot_rwa</span>(fit)</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+</div>
+</div>
+<div id="bootstrap-scope-and-failure-policy" class="section level2">
+<h2>Bootstrap scope and failure policy</h2>
+<p><code>bootstrap = TRUE</code> performs independent, identically
+distributed (iid) <strong>individual-row resampling with
+replacement</strong>. Each sampled row carries its original weight, and
+sampling is not proportional to weights. Missing outcomes are removed
+before resampling, but missing-weight and predictor filters apply
+<strong>within each sample</strong>. Consequently, the sampling frame
+can be larger than the point estimate’s complete-case data and
+individual samples can retain different numbers of rows.</p>
+<p>A weight column does not encode clusters, strata, selection
+dependence, or replicate-weight designs. This interface is
+observation-weighted RWA with an iid-row bootstrap, not general
+complex-survey variance estimation. The appropriateness of ordinary row
+resampling depends on the sampling design; use design-aware methods when
+the iid-row assumptions are unsuitable.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>boot_fit <span class="ot">&lt;-</span> <span class="fu">rwa</span>(d, <span class="st">&quot;mpg&quot;</span>, <span class="fu">c</span>(<span class="st">&quot;hp&quot;</span>, <span class="st">&quot;wt&quot;</span>, <span class="st">&quot;disp&quot;</span>), <span class="at">method =</span> <span class="st">&quot;multiple&quot;</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>                <span class="at">weight =</span> <span class="st">&quot;observation_weight&quot;</span>, <span class="at">bootstrap =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>                <span class="at">n_bootstrap =</span> <span class="dv">1000</span>, <span class="at">comprehensive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>boot_fit<span class="sc">$</span>bootstrap<span class="sc">$</span>ci_results<span class="sc">$</span>random_comparison</span></code></pre></div>
+<p>Comprehensive analysis compares each requested predictor to an added
+random predictor, even without a focal predictor. Supplying, for
+example, <code>focal = &quot;wt&quot;</code> additionally compares the other
+predictors to <code>wt</code>. Interval labels follow the requested
+predictor order, independently of result sorting.</p>
+<p>Every sample must estimate the same requested model. A constant
+column, singular predictor matrix, or invalid joint matrix causes a
+clear error and stops the bootstrap. Samples are <strong>not skipped or
+retried</strong>, predictors are not dropped, and statistics are not
+recycled. A rare binary predictor that loses its minority category in a
+sample is one such failure. Inspect predictor variation, sample size,
+and missingness rather than treating incomplete bootstrap output as
+valid intervals.</p>
+</div>
+<div id="matrix-diagnostics" class="section level2">
+<h2>Matrix diagnostics</h2>
+<p>The full joint outcome/predictor correlation matrix must be finite,
+have the expected variable identities and dimensions, and be positive
+semidefinite within tolerance. Its smallest eigenvalue must be at least
+minus
+<code>sqrt(.Machine$double.eps) * max(1, max(abs(eigenvalues)))</code>.
+The predictor block must have strictly positive computed eigenvalues and
+its transformation must be solvable. No additional conditioning cutoff
+is imposed on previously estimable models. Highly correlated predictors
+can still produce sensitive estimates, so inspect their stability rather
+than treating successful numerical execution as evidence of reliable
+individual weights.</p>
+<p>Calculated R-squared is also checked: values above
+<code>1 + sqrt(.Machine$double.eps)</code> produce an error, not a
+clipped result. This separate check is needed because nearly collinear
+predictors can amplify a small joint-matrix error into a materially
+impossible fit.</p>
+<p>A singular <strong>joint</strong> matrix is valid for an exact fit
+when the <strong>predictor</strong> block remains invertible. A
+materially indefinite joint matrix is not valid, even if its predictor
+block is invertible: pairwise correlations computed on different row
+subsets can otherwise produce an impossible R-squared above one.
+Consider <code>use = &quot;complete.obs&quot;</code> and inspect missingness if
+this occurs; changing the retained sample changes the analysis and is
+not an automatic repair.</p>
+<p>No eigenvalue clipping, matrix repair, or automatic change to
+complete cases is performed. Constant variables, insufficient
+observations, and zero R-squared (for which rescaled relative weights
+are undefined) also produce informative errors.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
