@@ -12,7 +12,7 @@
 
 <meta name="author" content="Martin Chan" />
 
-<meta name="date" content="2026-09-16" />
+<meta name="date" content="2026-09-28" />
 
 <title>Introduction to Relative Weights Analysis with the rwa Package</title>
 
@@ -342,7 +342,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Introduction to Relative Weights Analysis
 with the rwa Package</h1>
 <h4 class="author">Martin Chan</h4>
-<h4 class="date">2026-09-16</h4>
+<h4 class="date">2026-09-28</h4>
 
 
 
@@ -864,7 +864,7 @@ intervals and significance tests</li>
 <span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a>rwa_speed_test <span class="ot">&lt;-</span> mtcars <span class="sc">%&gt;%</span> <span class="fu">rwa</span>(<span class="at">outcome =</span> <span class="st">&quot;mpg&quot;</span>, <span class="at">predictors =</span> predictors)</span>
 <span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a>end_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
 <span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;RWA computation time:&quot;</span>, <span class="fu">round</span>(<span class="fu">as.numeric</span>(end_time <span class="sc">-</span> start_time, <span class="at">units =</span> <span class="st">&quot;secs&quot;</span>), <span class="dv">4</span>), <span class="st">&quot;seconds</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a><span class="co">#&gt; RWA computation time: 0.0485 seconds</span></span></code></pre></div>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a><span class="co">#&gt; RWA computation time: 0.0055 seconds</span></span></code></pre></div>
 </div>
 </div>
 </div>

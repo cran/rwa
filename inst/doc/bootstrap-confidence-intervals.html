@@ -12,7 +12,7 @@
 
 <meta name="author" content="Martin Chan" />
 
-<meta name="date" content="2026-09-16" />
+<meta name="date" content="2026-09-28" />
 
 <title>Bootstrap Confidence Intervals for Relative Weights Analysis</title>
 
@@ -342,7 +342,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Bootstrap Confidence Intervals for Relative
 Weights Analysis</h1>
 <h4 class="author">Martin Chan</h4>
-<h4 class="date">2026-09-16</h4>
+<h4 class="date">2026-09-28</h4>
 
 
 
@@ -457,15 +457,15 @@ contract and examples.</p>
 <span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co"># View results with confidence intervals</span></span>
 <span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>result_bootstrap<span class="sc">$</span>result</span>
 <span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Raw.RelWeight.CI.Lower</span></span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt; 1        hp     0.2321744           29.79691    -             0.17994305</span></span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2284797           29.32274    -             0.17978211</span></span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; 3      disp     0.2221469           28.50999    -             0.15733870</span></span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; 4      gear     0.0963886           12.37037    +             0.04021568</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt; 1        hp     0.2321744           29.79691    -             0.18913130</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2284797           29.32274    -             0.17627688</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; 3      disp     0.2221469           28.50999    -             0.15789831</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; 4      gear     0.0963886           12.37037    +             0.03990917</span></span>
 <span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Upper Random.Diff.CI.Lower Random.Diff.CI.Upper</span></span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; 1              0.2776723           0.18500702            0.3029704</span></span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt; 2              0.2817795           0.15651347            0.3036993</span></span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; 3              0.2806779           0.15031200            0.2954721</span></span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&gt; 4              0.1725336           0.02443039            0.1955195</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; 1              0.2862229           0.18650863            0.3051890</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt; 2              0.2743757           0.17174567            0.2989302</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; 3              0.2782520           0.15137285            0.2892399</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&gt; 4              0.1777565           0.03664689            0.2052624</span></span>
 <span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&gt;   Raw.Significant</span></span>
 <span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&gt; 1            TRUE</span></span>
 <span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&gt; 2            TRUE</span></span>
@@ -492,10 +492,10 @@ for the difference from a randomly generated variable’s weight</li>
 <span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 × 6</span></span>
 <span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt;   variable weight_index ci_lower ci_upper ci_method ci_type</span></span>
 <span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;           &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;  </span></span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.180     0.282 bca       raw    </span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.157     0.281 bca       raw    </span></span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.180     0.278 bca       raw    </span></span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0402    0.173 bca       raw</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.176     0.274 bca       raw    </span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.158     0.278 bca       raw    </span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.189     0.286 bca       raw    </span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0399    0.178 bca       raw</span></span>
 <span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a></span>
 <span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co"># Identify significant predictors</span></span>
 <span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>significant_vars <span class="ot">&lt;-</span> result_bootstrap<span class="sc">$</span>result <span class="sc">%&gt;%</span></span>
@@ -547,11 +547,11 @@ bootstrap tests</li>
 <span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a></span>
 <span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>custom_bootstrap<span class="sc">$</span>result</span>
 <span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Raw.RelWeight.CI.Lower</span></span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; 1       cyl     0.3837012           50.51586    -              0.2813497</span></span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; 2      disp     0.3758646           49.48414    -              0.2309071</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; 1       cyl     0.3837012           50.51586    -              0.2785976</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; 2      disp     0.3758646           49.48414    -              0.2523818</span></span>
 <span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Upper Random.Diff.CI.Lower Random.Diff.CI.Upper</span></span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; 1              0.4568403            0.1748707            0.4470895</span></span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; 2              0.4637872            0.2073237            0.4656827</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; 1              0.4557142            0.2166868            0.4655974</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; 2              0.4685787            0.2440391            0.4894704</span></span>
 <span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt;   Raw.Significant</span></span>
 <span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; 1            TRUE</span></span>
 <span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; 2            TRUE</span></span></code></pre></div>
@@ -575,17 +575,17 @@ not recommended for formal statistical inference.</p>
 <span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co"># Note the warning message about interpretation</span></span>
 <span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>result_rescaled_ci<span class="sc">$</span>result</span>
 <span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Raw.RelWeight.CI.Lower</span></span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; 1      disp     0.2793550           36.37966    -              0.2124971</span></span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2723144           35.46279    -              0.2133034</span></span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; 3        hp     0.2162184           28.15755    -              0.1438879</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; 1      disp     0.2793550           36.37966    -              0.1913383</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; 2       cyl     0.2723144           35.46279    -              0.2193447</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; 3        hp     0.2162184           28.15755    -              0.1505241</span></span>
 <span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Upper Random.Diff.CI.Lower Random.Diff.CI.Upper</span></span>
-<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="co">#&gt; 1              0.3456126           0.15780643            0.3218527</span></span>
-<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt; 2              0.3322052           0.11788124            0.2895544</span></span>
-<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co">#&gt; 3              0.2622216           0.02978695            0.2415767</span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="co">#&gt; 1              0.3422622            0.2091014            0.3642198</span></span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt; 2              0.3261586            0.1926903            0.3534514</span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co">#&gt; 3              0.2725139            0.1477597            0.3002845</span></span>
 <span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt;   Raw.Significant Rescaled.RelWeight.CI.Lower Rescaled.RelWeight.CI.Upper</span></span>
-<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="co">#&gt; 1            TRUE                    30.10095                    42.87168</span></span>
-<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a><span class="co">#&gt; 2            TRUE                    30.20278                    43.36890</span></span>
-<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a><span class="co">#&gt; 3            TRUE                    20.80491                    35.82311</span></span></code></pre></div>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="co">#&gt; 1            TRUE                    29.66279                    43.14650</span></span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a><span class="co">#&gt; 2            TRUE                    30.18890                    42.66420</span></span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a><span class="co">#&gt; 3            TRUE                    19.39848                    35.53646</span></span></code></pre></div>
 </div>
 <div id="why-rescaled-cis-are-problematic" class="section level3">
 <h3>Why Rescaled CIs Are Problematic</h3>
@@ -614,26 +614,26 @@ confidence intervals</strong> for statistical inference.</p>
 <span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a></span>
 <span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="fu">print</span>(diamond_rwa<span class="sc">$</span>result)</span>
 <span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co">#&gt;   Variables Raw.RelWeight Rescaled.RelWeight Sign Sign.Rescaled.RelWeight</span></span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="co">#&gt; 1     carat  0.2827671839        33.61747478    +             33.61747478</span></span>
-<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="co">#&gt; 2         y  0.2410353741        28.65608554    +             28.65608554</span></span>
-<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="co">#&gt; 3         x  0.2390627389        28.42156395    +             28.42156395</span></span>
-<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="co">#&gt; 4         z  0.0721865633         8.58207780    +              8.58207780</span></span>
-<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co">#&gt; 5     table  0.0053869575         0.64044174    +              0.64044174</span></span>
-<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="co">#&gt; 6     depth  0.0006927239         0.08235619    -             -0.08235619</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="co">#&gt; 1     carat   0.247570924         28.9803411    +              28.9803411</span></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="co">#&gt; 2         x   0.204169997         23.8998831    +              23.8998831</span></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="co">#&gt; 3         y   0.204148408         23.8973559    +              23.8973559</span></span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="co">#&gt; 4         z   0.194421154         22.7586958    +              22.7586958</span></span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co">#&gt; 5     table   0.002312487          0.2706968    +               0.2706968</span></span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="co">#&gt; 6     depth   0.001648979          0.1930274    -              -0.1930274</span></span>
 <span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="co">#&gt;   Raw.RelWeight.CI.Lower Raw.RelWeight.CI.Upper Random.Diff.CI.Lower</span></span>
-<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="co">#&gt; 1           0.2540326046           0.3432575285          0.255325134</span></span>
-<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="co">#&gt; 2           0.2227669146           0.2868371992          0.221011017</span></span>
-<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="co">#&gt; 3           0.2206290118           0.2847261569          0.218437901</span></span>
-<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="co">#&gt; 4          -0.0603570553           0.1169361261         -0.063730598</span></span>
-<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="co">#&gt; 5           0.0008142242           0.0086470381         -0.002033129</span></span>
-<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="co">#&gt; 6          -0.0020080833           0.0008013738         -0.003736398</span></span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="co">#&gt; 1           0.2361321614            0.260178173         0.2353686450</span></span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="co">#&gt; 2           0.1969854957            0.211118953         0.1971018769</span></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="co">#&gt; 3           0.1971774327            0.211018885         0.1969558839</span></span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="co">#&gt; 4           0.1846374862            0.204725182         0.1843235435</span></span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="co">#&gt; 5          -0.0004077203            0.003516501        -0.0007624318</span></span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="co">#&gt; 6          -0.0001732326            0.002305639        -0.0009478957</span></span>
 <span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a><span class="co">#&gt;   Random.Diff.CI.Upper Raw.Significant</span></span>
-<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a><span class="co">#&gt; 1         0.3379597540            TRUE</span></span>
-<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="co">#&gt; 2         0.2852931602            TRUE</span></span>
-<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a><span class="co">#&gt; 3         0.2827117062            TRUE</span></span>
-<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a><span class="co">#&gt; 4         0.1153072073           FALSE</span></span>
-<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a><span class="co">#&gt; 5         0.0071742124           FALSE</span></span>
-<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a><span class="co">#&gt; 6        -0.0002043083           FALSE</span></span></code></pre></div>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a><span class="co">#&gt; 1          0.260464644            TRUE</span></span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="co">#&gt; 2          0.210961927            TRUE</span></span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a><span class="co">#&gt; 3          0.211301485            TRUE</span></span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a><span class="co">#&gt; 4          0.204996987            TRUE</span></span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a><span class="co">#&gt; 5          0.003685408           FALSE</span></span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a><span class="co">#&gt; 6          0.002669150           FALSE</span></span></code></pre></div>
 </div>
 <div id="interpreting-results" class="section level3">
 <h3>Interpreting Results</h3>
@@ -646,13 +646,14 @@ confidence intervals</strong> for statistical inference.</p>
 <span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; Significant diamond price drivers (sorted by importance):</span></span>
 <span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="fu">print</span>(significant_drivers)</span>
 <span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt;   Variables Rescaled.RelWeight Sign.Rescaled.RelWeight</span></span>
-<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; 1     carat           33.61747                33.61747</span></span>
-<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; 2         y           28.65609                28.65609</span></span>
-<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; 3         x           28.42156                28.42156</span></span>
-<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a></span>
-<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Model R-squared:&quot;</span>, <span class="fu">round</span>(diamond_rwa<span class="sc">$</span>rsquare, <span class="dv">3</span>))</span>
-<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt; Model R-squared: 0.841</span></span></code></pre></div>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; 1     carat           28.98034                28.98034</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; 2         x           23.89988                23.89988</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; 3         y           23.89736                23.89736</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; 4         z           22.75870                22.75870</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Model R-squared:&quot;</span>, <span class="fu">round</span>(diamond_rwa<span class="sc">$</span>rsquare, <span class="dv">3</span>))</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="co">#&gt; Model R-squared: 0.854</span></span></code></pre></div>
 </div>
 </div>
 <div id="best-practices" class="section level2">
@@ -685,10 +686,10 @@ the random-variable comparison) to judge importance.</p>
 <span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 × 6</span></span>
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt;   variable weight_index ci_lower ci_upper ci_method ci_type</span></span>
 <span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;           &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;  </span></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.180     0.282 bca       raw    </span></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.157     0.281 bca       raw    </span></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.180     0.278 bca       raw    </span></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0402    0.173 bca       raw</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.176     0.274 bca       raw    </span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.158     0.278 bca       raw    </span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.189     0.286 bca       raw    </span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0399    0.178 bca       raw</span></span>
 <span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a></span>
 <span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co"># Assess precision</span></span>
 <span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>ci_analysis <span class="ot">&lt;-</span> ci_data <span class="sc">%&gt;%</span></span>
@@ -705,10 +706,10 @@ the random-variable comparison) to judge importance.</p>
 <span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 × 8</span></span>
 <span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="co">#&gt;   variable weight_index ci_lower ci_upper ci_method ci_type ci_width precision  </span></span>
 <span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;           &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;      &lt;dbl&gt; &lt;chr&gt;      </span></span>
-<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.180     0.282 bca       raw       0.102  Medium pre…</span></span>
-<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.157     0.281 bca       raw       0.123  Medium pre…</span></span>
-<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.180     0.278 bca       raw       0.0977 Medium pre…</span></span>
-<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0402    0.173 bca       raw       0.132  Medium pre…</span></span></code></pre></div>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="co">#&gt; 1 cyl                 1   0.176     0.274 bca       raw       0.0981 Medium pre…</span></span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="co">#&gt; 2 disp                2   0.158     0.278 bca       raw       0.120  Medium pre…</span></span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="co">#&gt; 3 hp                  3   0.189     0.286 bca       raw       0.0971 Medium pre…</span></span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a><span class="co">#&gt; 4 gear                4   0.0399    0.178 bca       raw       0.138  Medium pre…</span></span></code></pre></div>
 </div>
 <div id="bootstrap-method-selection" class="section level3">
 <h3>3. Bootstrap Method Selection</h3>
@@ -775,10 +776,10 @@ when possible</li>
 <span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="co">#&gt; # A tibble: 4 × 4</span></span>
 <span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="co">#&gt;   variable ci_lower ci_upper ci_method</span></span>
 <span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;    </span></span>
-<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a><span class="co">#&gt; 1 cyl        0.180     0.282 bca      </span></span>
-<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a><span class="co">#&gt; 2 disp       0.157     0.281 bca      </span></span>
-<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a><span class="co">#&gt; 3 hp         0.180     0.278 bca      </span></span>
-<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a><span class="co">#&gt; 4 gear       0.0402    0.173 bca</span></span></code></pre></div>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a><span class="co">#&gt; 1 cyl        0.176     0.274 bca      </span></span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a><span class="co">#&gt; 2 disp       0.158     0.278 bca      </span></span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a><span class="co">#&gt; 3 hp         0.189     0.286 bca      </span></span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a><span class="co">#&gt; 4 gear       0.0399    0.178 bca</span></span></code></pre></div>
 </div>
 </div>
 <div id="troubleshooting" class="section level2">
@@ -849,10 +850,10 @@ intervals</li>
 <span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a><span class="co">#&gt; Significant Predictors:</span></span>
 <span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a><span class="fu">print</span>(report_data)</span>
 <span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a><span class="co">#&gt;   Variables Rescaled.RelWeight Raw.RelWeight.CI.Lower Raw.RelWeight.CI.Upper</span></span>
-<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a><span class="co">#&gt; 1        hp           29.79691             0.17994305              0.2776723</span></span>
-<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a><span class="co">#&gt; 2       cyl           29.32274             0.17978211              0.2817795</span></span>
-<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a><span class="co">#&gt; 3      disp           28.50999             0.15733870              0.2806779</span></span>
-<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a><span class="co">#&gt; 4      gear           12.37037             0.04021568              0.1725336</span></span></code></pre></div>
+<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a><span class="co">#&gt; 1        hp           29.79691             0.18913130              0.2862229</span></span>
+<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a><span class="co">#&gt; 2       cyl           29.32274             0.17627688              0.2743757</span></span>
+<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a><span class="co">#&gt; 3      disp           28.50999             0.15789831              0.2782520</span></span>
+<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a><span class="co">#&gt; 4      gear           12.37037             0.03990917              0.1777565</span></span></code></pre></div>
 </div>
 </div>
 <div id="references" class="section level2">
